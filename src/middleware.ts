@@ -11,9 +11,13 @@ export function middleware(request: NextRequest) {
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path))
 
   if (isProtected && !token) {
+    // Admin goes to its own separate login page
+    if (pathname.startsWith("/admin")) {
+      return NextResponse.redirect(new URL("/auth/admin-signin", request.url))
+    }
+
     let role = "customer"
-    if (pathname.startsWith("/admin")) role = "admin"
-    else if (pathname.startsWith("/cleaner-portal")) role = "cleaner"
+    if (pathname.startsWith("/cleaner-portal")) role = "cleaner"
 
     const loginUrl = new URL("/auth/signin", request.url)
     loginUrl.searchParams.set("role", role)

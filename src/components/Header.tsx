@@ -136,9 +136,9 @@ export default function Header() {
                 </li>
                 <li>
                   <Link
-                    href="/auth/signin"
+                    href="/auth/register"
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold text-white transition-all"
-                    style={{ backgroundColor: "var(--primary)", hover: { backgroundColor: "var(--accent)" } }}
+                    style={{ backgroundColor: "var(--primary)" }}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--accent)")}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--primary)")}
                   >
@@ -237,7 +237,7 @@ export default function Header() {
                 <Link href="/auth/signin" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link font-semibold" style={{ color: "var(--primary)" }}>
                   Login
                 </Link>
-                <Link href="/auth/signin" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-bold text-white mt-1" style={{ backgroundColor: "var(--primary)" }}>
+                <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-bold text-white mt-1" style={{ backgroundColor: "var(--primary)" }}>
                   Register
                 </Link>
               </>

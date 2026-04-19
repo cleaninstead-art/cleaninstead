@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Leaf, User, Shield, Sparkles, Eye, EyeOff } from "lucide-react"
+import { Leaf, User, Sparkles, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,18 +11,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const roles = [
   { id: "customer", label: "Customer", icon: User, color: "bg-emerald-100 text-emerald-700", demo: "amanda@example.com" },
   { id: "cleaner", label: "Cleaner", icon: Sparkles, color: "bg-teal-100 text-teal-700", demo: "maria@cleaninstead.com" },
-  { id: "admin", label: "Admin", icon: Shield, color: "bg-green-100 text-green-700", demo: "admin@cleaninstead.com" },
 ]
 
 function getInitialCredentials(roleParam: string | null) {
-  if (roleParam && ["admin", "cleaner", "customer"].includes(roleParam)) {
-    const r = roles.find((x) => x.id === roleParam)
-    if (r) {
-      return {
-        email: r.demo,
-        password: r.demo.includes("admin") ? "admin123" : r.demo.includes("cleaner") ? "cleaner123" : "customer123",
-      }
-    }
+  if (roleParam === "cleaner") {
+    return { email: "maria@cleaninstead.com", password: "cleaner123" }
+  }
+  if (roleParam === "customer") {
+    return { email: "amanda@example.com", password: "customer123" }
   }
   return { email: "", password: "" }
 }
@@ -38,7 +34,7 @@ function SignInForm() {
   const roleParam = searchParams.get("role")
   const initialCreds = getInitialCredentials(roleParam)
 
-  const [role, setRole] = useState(roleParam && ["admin", "cleaner", "customer"].includes(roleParam) ? roleParam : "customer")
+  const [role, setRole] = useState(roleParam === "cleaner" ? "cleaner" : "customer")
   const [email, setEmail] = useState(initialCreds.email)
   const [password, setPassword] = useState(initialCreds.password)
   const [showPassword, setShowPassword] = useState(false)
@@ -61,8 +57,8 @@ function SignInForm() {
       const data = await res.json()
 
       if (data.success && data.user) {
-        // Login successful - redirect to the appropriate dashboard
-        router.push(getRedirectPath(role))
+        // Use the SERVER-returned role to redirect, not the local tab
+        router.push(getRedirectPath(data.user.role))
       } else {
         setError(data.error || "Invalid email or password")
       }
@@ -76,7 +72,7 @@ function SignInForm() {
 
   const fillDemo = (demoEmail: string) => {
     setEmail(demoEmail)
-    setPassword(demoEmail.includes("admin") ? "admin123" : demoEmail.includes("cleaner") ? "cleaner123" : "customer123")
+    setPassword(demoEmail.includes("cleaner") ? "cleaner123" : "customer123")
   }
 
   return (
@@ -96,7 +92,7 @@ function SignInForm() {
             <CardDescription>Select your role and enter credentials</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-2 mb-6">
+            <div className="grid grid-cols-2 gap-2 mb-6">
               {roles.map((r) => {
                 const Icon = r.icon
                 return (
@@ -149,9 +145,13 @@ function SignInForm() {
                 </div>
               </div>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
 
-              <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading}>
+              <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 h-11 font-semibold" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
@@ -161,7 +161,16 @@ function SignInForm() {
                 Demo credentials pre-filled. Click a role tab above, then Sign In.
               </p>
               <p className="text-xs text-gray-400 text-center mt-1">
-                Password: admin123 / cleaner123 / customer123
+                Password: cleaner123 / customer123
+              </p>
+            </div>
+
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-500">
+                Don&apos;t have an account?{" "}
+                <a href="/auth/register" className="text-emerald-600 font-medium hover:text-emerald-700">
+                  Register
+                </a>
               </p>
             </div>
           </CardContent>
