@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import ChatBot from "@/components/ChatBot";
+import { Providers } from "@/components/providers";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -485,7 +486,7 @@ export default function RootLayout({
         <div className="min-h-screen flex flex-col" itemScope itemType="https://schema.org/LocalBusiness">
           <Header />
           <main className="flex-1" role="main" id="main-content">
-            {children}
+            <Providers>{children}</Providers>
           </main>
           <Footer />
         </div>
