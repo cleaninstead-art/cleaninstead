@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   try {
-    // Try both cookie names for compatibility
-    const token = 
-      request.cookies.get("ci-session")?.value ||
-      request.cookies.get("__Secure-ci-session")?.value
+    const token = request.cookies.get("ci-session")?.value
 
     if (!token) {
       return NextResponse.json({ user: null })
@@ -25,7 +22,6 @@ export async function GET(request: NextRequest) {
         },
       })
     } catch {
-      // Token expired or invalid
       return NextResponse.json({ user: null })
     }
   } catch {
@@ -34,11 +30,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  // Logout - clear cookies
   const response = NextResponse.json({ success: true })
   response.cookies.set("ci-session", "", { maxAge: 0, path: "/" })
-  response.cookies.set("__Secure-ci-session", "", { maxAge: 0, path: "/" })
-  response.cookies.set("next-auth.session-token", "", { maxAge: 0, path: "/" })
-  response.cookies.set("__Secure-next-auth.session-token", "", { maxAge: 0, path: "/" })
   return response
 }

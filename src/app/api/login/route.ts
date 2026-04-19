@@ -76,19 +76,13 @@ export async function POST(request: NextRequest) {
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     })
 
-    // Set session cookie (use __Secure- prefix for HTTPS)
-    response.cookies.set("__Secure-ci-session", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 86400,
-    })
+    // Set session cookie
+    // On HTTPS (production), browsers require Secure flag
+    const isHttps = request.headers.get("x-forwarded-proto") === "https" || request.url?.startsWith("https")
 
-    // Also set without __Secure- for compatibility (no secure flag for localhost/HTTP)
     response.cookies.set("ci-session", token, {
       httpOnly: true,
-      secure: false,
+      secure: isHttps,
       sameSite: "lax",
       path: "/",
       maxAge: 86400,
