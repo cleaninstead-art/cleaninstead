@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,19 +8,206 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?
+  role          String    @default("customer")
+  phone         String?
+  avatar        String?
+  address       String?
+  city          String?
+  emergencyContact String?
+  isAvailable   Boolean   @default(true)
+  notificationsEnabled Boolean @default(true)
+  ecoOnly       Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bookings         Booking[]     @relation("CustomerBookings")
+  bookingCleans    Booking[]     @relation("BookingCleaner")
+  assignedJobs     CleanerJob[]  @relation("AssignedCleanerJobs")
+  reviews          Review[]
+  transactions     Transaction[]
+  referralsMade    Referral[]   @relation("Referrer")
+  referralsReceived Referral[]   @relation("Referred")
+  sentMessages     Message[]     @relation("MessageSender")
+  receivedMessages Message[]     @relation("MessageReceiver")
+  givenTips        Tip[]         @relation("TipGiver")
+  receivedTips     Tip[]         @relation("TipReceiver")
+  cleanerProfile   CleanerProfile?
+  customerProfile   CustomerProfile?
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model CleanerProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  rating        Float    @default(0)
+  totalJobs     Int      @default(0)
+  totalEarnings Float    @default(0)
+  joinDate      DateTime @default(now())
+  bio           String?
+  skills        String   @default("")
+  serviceAreas  String   @default("")
+  isTopRated    Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CustomerProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  totalBookings     Int      @default(0)
+  loyaltyPoints     Int      @default(0)
+  totalCleans       Int      @default(0)
+  referralCode      String   @unique
+  preferredTime     String   @default("morning")
+  petFriendly       Boolean  @default(true)
+  ecoProducts       Boolean  @default(true)
+  specialInstructions String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id            String   @id @default(cuid())
+  bookingNumber Int      @unique @default(0)
+  customerId    String
+  cleanerId     String?
+  serviceType   String
+  date          String
+  startTime     String
+  endTime       String
+  amount        Float
+  address       String
+  city          String   @default("")
+  status        String   @default("pending")
+  specialInstructions String?
+  accessInfo    String?
+  reviewed      Boolean  @default(false)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  customer    User        @relation("CustomerBookings", fields: [customerId], references: [id])
+  cleaner     User?       @relation("BookingCleaner", fields: [cleanerId], references: [id])
+  transaction Transaction?
+  reviews     Review[]
+  cleanerJob  CleanerJob?
+}
+
+model CleanerJob {
+  id         String   @id @default(cuid())
+  bookingId  String   @unique
+  cleanerId  String
+  status     String   @default("scheduled")
+  progress   Int      @default(0)
+  notes      String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  cleaner User    @relation("AssignedCleanerJobs", fields: [cleanerId], references: [id])
+}
+
+model Transaction {
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  bookingId     String   @unique
+  customerId    String
+  amount        Float
+  status        String   @default("pending")
+  method        String   @default("card")
+  capturedAt    DateTime?
+  refundedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  booking  Booking? @relation(fields: [bookingId], references: [id])
+  customer  User     @relation(fields: [customerId], references: [id])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  bookingId   String
+  customerId  String
+  cleanerId   String?
+  rating      Int
+  punctuality Int
+  quality     Int
+  profession  Int
+  communication Int
+  comment     String
+  isPublic    Boolean  @default(true)
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  customer User    @relation(fields: [customerId], references: [id])
+}
+
+model Offer {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  type        String
+  value       Float
+  minBooking  Float    @default(0)
+  maxUses     Int      @default(100)
+  usedCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  expiresAt   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Inventory {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  quantity    Int
+  unit        String
+  minStock    Int      @default(5)
+  costPerUnit Float
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model Referral {
+  id            String   @id @default(cuid())
+  referrerId    String
+  referredId    String?
+  referralCode  String
+  creditsEarned Float    @default(0)
+  status        String   @default("pending")
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  referrer User  @relation("Referrer", fields: [referrerId], references: [id])
+  referred User? @relation("Referred", fields: [referredId], references: [id])
+}
+
+model Message {
+  id           String   @id @default(cuid())
+  senderId     String
+  receiverId   String
+  content      String
+  isRead       Boolean  @default(false)
+  readAt       DateTime?
+  createdAt    DateTime @default(now())
+
+  sender   User @relation("MessageSender", fields: [senderId], references: [id])
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id])
+}
+
+model Tip {
+  id         String   @id @default(cuid())
+  customerId String
+  cleanerId  String
+  bookingId  String?
+  amount     Float
+  createdAt  DateTime @default(now())
+
+  customer User @relation("TipGiver", fields: [customerId], references: [id])
+  cleaner  User @relation("TipReceiver", fields: [cleanerId], references: [id])
 }
