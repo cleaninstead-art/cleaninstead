@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,166 +14,19 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  name          String
-  password      String
-  role          String   @default("customer") // admin, cleaner, customer
-  phone         String?
-  avatar        String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  cleanerProfile CleanerProfile?
-  customerProfile CustomerProfile?
-  reviews         Review[]
-  messages        Message[]
-}
-
-model CleanerProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  rating      Float    @default(0)
-  totalJobs   Int      @default(0)
-  earnings    Float    @default(0)
-  skills      String   @default("General Cleaning")
-  areas       String   @default("Surrey")
-  bio         String?
-  isApproved  Boolean  @default(false)
-  isSuspended Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-  jobs  Booking[]
-}
-
-model CustomerProfile {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  address          String?
-  city             String   @default("Surrey")
-  preferredTime    String   @default("morning")
-  referralCode     String   @unique
-  referralCount    Int      @default(0)
-  loyaltyPoints    Int      @default(0)
-  totalBookings    Int      @default(0)
-  ecoBottlesSaved  Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-  bookings Booking[]
-}
-
-model Booking {
-  id            String   @id @default(cuid())
-  customerId    String
-  cleanerId     String?
-  serviceType   String   @default("Regular Clean")
-  status        String   @default("pending") // pending, confirmed, in_progress, completed, cancelled
-  date          DateTime
-  startTime     String   @default("09:00")
-  endTime       String   @default("11:00")
-  address       String
-  notes         String?
-  totalAmount   Float
-  cleanerEarnings Float  @default(0)
-  rating        Float?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  customer CustomerProfile @relation(fields: [customerId], references: [id])
-  cleaner  CleanerProfile? @relation(fields: [cleanerId], references: [id])
-  payment  Payment?
-  review   Review?
-}
-
-model Payment {
-  id              String   @id @default(cuid())
-  bookingId       String   @unique
-  amount          Float
-  status          String   @default("pending") // pending, captured, refunded
-  stripePaymentId String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  booking Booking @relation(fields: [bookingId], references: [id])
-}
-
-model Review {
   id        String   @id @default(cuid())
-  bookingId String   @unique
-  userId    String
-  rating    Int
-  comment   String?
-  isApproved Boolean @default(false)
+  email     String   @unique
+  name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  booking Booking @relation(fields: [bookingId], references: [id])
-  user     User    @relation(fields: [userId], references: [id])
 }
 
-model Message {
+model Post {
   id        String   @id @default(cuid())
-  senderId  String
-  receiverId String
-  content   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  sender   User @relation("SentMessages", fields: [senderId], references: [id])
-  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
-}
-
-model Discount {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  type        String   @default("percentage") // percentage, fixed
-  value       Float
-  minBooking  Float    @default(0)
-  maxUses     Int      @default(100)
-  usedCount   Int      @default(0)
-  isActive    Boolean  @default(true)
-  expiresAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model InventoryItem {
-  id          String   @id @default(cuid())
-  name        String
-  category    String   @default("cleaning")
-  quantity    Int      @default(0)
-  unit        String   @default("bottle")
-  minStock    Int      @default(5)
-  costPerUnit Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  logs InventoryLog[]
-}
-
-model InventoryLog {
-  id          String   @id @default(cuid())
-  itemId      String
-  change      Int
-  reason      String   @default("restock")
-  createdAt   DateTime @default(now())
-
-  item InventoryItem @relation(fields: [itemId], references: [id])
-}
-
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
   title     String
-  message   String
-  isRead    Boolean  @default(false)
-  type      String   @default("info")
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  updatedAt DateTime @updatedAt
 }

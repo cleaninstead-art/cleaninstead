@@ -1,588 +1,281 @@
-import Link from "next/link"
-import {
-  Leaf,
-  Shield,
-  Star,
-  Phone,
-  Mail,
-  MapPin,
-  Clock,
-  CheckCircle2,
-  Sparkles,
-  Droplets,
-  Recycle,
-  Award,
-  Users,
-  ChevronRight,
-  Menu,
-  X,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
+"use client";
 
-const services = [
-  {
-    icon: Sparkles,
-    title: "Regular Clean",
-    desc: "Consistent weekly or bi-weekly cleaning to keep your home spotless. Our most popular service with flexible scheduling that works around your life.",
-    features: ["Dusting & wiping all surfaces", "Vacuuming & mopping floors", "Kitchen & bathroom sanitization", "Trash removal & tidying"],
-  },
-  {
-    icon: Droplets,
-    title: "Deep Clean",
-    desc: "A thorough top-to-bottom cleaning that reaches every corner. Perfect for seasonal refreshes, post-renovation cleanup, or first-time bookings.",
-    features: ["Inside appliances & cabinets", "Baseboard & window sill detailing", "Light fixture cleaning", "Grout & tile scrubbing"],
-  },
-  {
-    icon: Recycle,
-    title: "Eco Clean",
-    desc: "Our signature 100% plant-based, zero-waste cleaning experience. Hospital-grade disinfection using only natural enzymatic products.",
-    features: ["Plant-based products only", "Refillable containers", "Zero single-use plastics", "Carbon-neutral service"],
-  },
-  {
-    icon: Shield,
-    title: "Move In/Out",
-    desc: "Comprehensive cleaning for moving day. We ensure the space is move-in ready or get your deposit back guaranteed.",
-    features: ["Full interior deep clean", "Appliance interior cleaning", "Window cleaning included", "Carpet spot treatment"],
-  },
-]
-
-const areas = [
-  "Surrey", "Vancouver", "Burnaby", "Richmond",
-  "Langley", "Delta", "Coquitlam", "New Westminster",
-]
-
-const testimonials = [
-  {
-    name: "Sarah M.",
-    area: "Surrey, BC",
-    rating: 5,
-    text: "CleanInstead transformed my home! The eco-friendly products give me peace of mind with my toddler around. The team is always professional and thorough. I've been using them for 6 months and wouldn't switch for anything.",
-  },
-  {
-    name: "David K.",
-    area: "Vancouver, BC",
-    rating: 5,
-    text: "After trying 4 different cleaning services, CleanInstead is by far the best. They actually show up on time, every time. The barefoot guarantee is real - they came back within hours when I pointed out a missed spot.",
-  },
-  {
-    name: "Priya R.",
-    area: "Burnaby, BC",
-    rating: 5,
-    text: "I love that everything is plant-based. As someone with allergies, I can finally have a clean home without the harsh chemical smell. The rewards program is a great bonus too - already earned a free session!",
-  },
-  {
-    name: "Mike T.",
-    area: "Richmond, BC",
-    rating: 4,
-    text: "Used them for our move-out clean and got our full deposit back. The landlord was impressed! Fair pricing for the quality of work. Booking online was super easy.",
-  },
-]
-
-const faqs = [
-  {
-    q: "Do eco-friendly products actually kill germs?",
-    a: "Absolutely. Our products are EPA-registered and hospital-grade. They use natural enzymatic reactions to kill 99.9% of bacteria without toxic fumes or harsh residues that can harm your family and pets.",
-  },
-  {
-    q: "How does your Rewards Program work?",
-    a: "It's completely automated! Every time a clean is completed, your account is automatically credited toward free services. After 3 cleans you get a free fridge clean, after 6 you get free windows, and after 10 you earn an entirely free cleaning session.",
-  },
-  {
-    q: "What if I'm not happy with the clean?",
-    a: "We offer a 24-hour Barefoot Guarantee. If we missed something or you're unsatisfied for any reason, simply let us know and we'll return to fix it at absolutely no cost to you.",
-  },
-  {
-    q: "Do you bring your own supplies?",
-    a: "Yes! Our teams arrive fully equipped with all necessary eco-friendly products, microfiber cloths, and professional-grade tools. You never need to provide anything. All our products are plant-based and non-toxic.",
-  },
-  {
-    q: "Are your cleaners insured and background-checked?",
-    a: "Every cleaner goes through our rigorous 4-step vetting process, which includes a comprehensive criminal background check, professional reference checks, an eco-product skills assessment, and full insurance verification before they ever enter your home.",
-  },
-  {
-    q: "What areas do you serve?",
-    a: "We currently serve Surrey, Vancouver, Burnaby, Richmond, Langley, Delta, Coquitlam, and surrounding areas in Metro Vancouver, BC.",
-  },
-  {
-    q: "How do I get a quote?",
-    a: "You can use our instant quote calculator on our Pricing page for an estimate right away. For a customized quote, simply fill out the contact form or give us a call - we'll get back to you within a few hours.",
-  },
-]
-
-const stats = [
-  { value: "2,500+", label: "Happy Homes Cleaned" },
-  { value: "4.9/5", label: "Average Rating" },
-  { value: "50+", label: "Eco-Certified Cleaners" },
-  { value: "15,000kg", label: "Plastic Saved" },
-]
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { faqs, trustBadges, testimonials, galleryItems, insteadDiffCards } from "@/lib/data";
 
 export default function HomePage() {
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [activeEcoFaq, setActiveEcoFaq] = useState<number | null>(null);
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center">
-                <Leaf className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-xl text-gray-900">CleanInstead</span>
-            </div>
-
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#services" className="text-sm font-medium text-gray-600 hover:text-emerald-700 transition-colors">Services</a>
-              <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-emerald-700 transition-colors">Pricing</a>
-              <a href="#about" className="text-sm font-medium text-gray-600 hover:text-emerald-700 transition-colors">About</a>
-              <a href="#reviews" className="text-sm font-medium text-gray-600 hover:text-emerald-700 transition-colors">Reviews</a>
-              <a href="#faq" className="text-sm font-medium text-gray-600 hover:text-emerald-700 transition-colors">FAQ</a>
-            </div>
-
-            <div className="hidden md:flex items-center gap-3">
-              <Link href="/auth/signin">
-                <Button variant="ghost" size="sm">Sign In</Button>
-              </Link>
-              <Link href="/auth/signin?role=customer">
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  Book a Clean
-                </Button>
-              </Link>
-            </div>
-
-            <Link href="/auth/signin" className="md:hidden">
-              <Button variant="outline" size="sm">Sign In</Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
+    <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-200 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-teal-200 rounded-full blur-3xl" />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-              <Leaf className="w-4 h-4" />
-              100% Eco-Friendly Cleaning
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
-              Clean Spaces,{" "}
-              <span className="text-emerald-600">Green Planet</span>
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-8 max-w-2xl">
-              Premium eco-friendly cleaning services for homes and businesses across Metro Vancouver. 
-              Hospital-grade clean without the toxic chemicals.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/auth/signin?role=customer">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto px-8 text-base">
-                  Get a Free Quote
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
-              <a href="tel:+16044971001">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 text-base">
-                  <Phone className="w-4 h-4 mr-2" />
-                  (604) 497-1001
-                </Button>
-              </a>
-            </div>
-            <div className="flex items-center gap-6 mt-8 text-sm text-gray-500">
-              <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Barefoot Guarantee</span>
-              <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Insured & Vetted</span>
-              <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> No Hidden Fees</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="bg-emerald-700 py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
-            {stats.map((s) => (
-              <div key={s.label}>
-                <div className="text-3xl md:text-4xl font-bold">{s.value}</div>
-                <div className="text-emerald-200 text-sm mt-1">{s.label}</div>
+      <section
+        className="hero"
+        style={{
+          backgroundImage:
+            "url('/hero-bg.jpg')",
+        }}
+      >
+        <div className="relative z-[2] max-w-[1200px] mx-auto px-5">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-[60px]">
+            <div className="text-left">
+              <h1 className="text-5xl md:text-[64px] leading-[1.1] mb-5" style={{ color: "var(--primary)" }}>
+                Eco-Friendly Cleaning
+                <br />
+                in Surrey &amp; Metro Vancouver
+              </h1>
+              <p className="text-lg md:text-xl mb-6 max-w-[600px]" style={{ color: "var(--light-text)" }}>
+                Premium, eco-friendly cleaning services in Surrey, Vancouver, Burnaby, Richmond, and Metro Vancouver, BC. 100% non-toxic, plant-based products for a safe, spotless home.
+              </p>
+              <div className="flex flex-wrap gap-5 text-sm" style={{ color: "var(--primary)" }}>
+                <span className="flex items-center gap-1"><span>&#10003;</span> 100% Non-Toxic</span>
+                <span className="flex items-center gap-1"><span>&#10003;</span> Zero Single-Use Plastics</span>
+                <span className="flex items-center gap-1"><span>&#10003;</span> Vetted &amp; Insured</span>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Services */}
-      <section id="services" className="py-20 md:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Cleaning Services</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              From regular maintenance to deep cleaning, we offer a range of eco-friendly services 
-              tailored to your needs. All services include our Barefoot Guarantee.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {services.map((s) => {
-              const Icon = s.icon
-              return (
-                <div
-                  key={s.title}
-                  className="group p-6 md:p-8 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-lg transition-all duration-300 bg-white"
-                >
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100 transition-colors">
-                      <Icon className="w-6 h-6 text-emerald-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900">{s.title}</h3>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 mb-4 leading-relaxed">{s.desc}</p>
-                  <ul className="space-y-2">
-                    {s.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-20 md:py-28 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              No hidden fees. No surprises. Flat-rate pricing based on your home size and service type.
-              All packages include eco-friendly products and our Barefoot Guarantee.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                name: "Regular Clean",
-                price: "From $120",
-                period: "per session",
-                desc: "Perfect for ongoing maintenance. Book weekly or bi-weekly.",
-                features: ["All rooms cleaned", "Kitchen & bathrooms", "Vacuum & mop", "Eco-friendly products", "Flexible scheduling"],
-                highlight: false,
-              },
-              {
-                name: "Deep Clean",
-                price: "From $220",
-                period: "per session",
-                desc: "Thorough top-to-bottom cleaning. Ideal for seasonal refreshes.",
-                features: ["Everything in Regular", "Inside appliances", "Baseboard detailing", "Window sills", "Grout scrubbing", "Cabinet interiors"],
-                highlight: true,
-              },
-              {
-                name: "Eco Clean",
-                price: "From $140",
-                period: "per session",
-                desc: "Our signature zero-waste, 100% plant-based experience.",
-                features: ["Everything in Regular", "Zero single-use plastic", "Refillable containers", "Plant-based only", "Carbon-neutral"],
-                highlight: false,
-              },
-            ].map((plan) => (
-              <div
-                key={plan.name}
-                className={`rounded-2xl p-6 md:p-8 ${
-                  plan.highlight
-                    ? "bg-emerald-600 text-white shadow-xl scale-105 relative"
-                    : "bg-white border border-gray-200 shadow-sm"
-                }`}
-              >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">
-                    Most Popular
-                  </div>
-                )}
-                <h3 className={`text-lg font-semibold ${plan.highlight ? "text-white" : "text-gray-900"}`}>
-                  {plan.name}
-                </h3>
-                <div className="mt-4 mb-2">
-                  <span className={`text-3xl font-bold ${plan.highlight ? "text-white" : "text-gray-900"}`}>
-                    {plan.price}
-                  </span>
-                  <span className={`text-sm ${plan.highlight ? "text-emerald-100" : "text-gray-500"}`}>
-                    {" "}{plan.period}
-                  </span>
-                </div>
-                <p className={`text-sm mb-6 ${plan.highlight ? "text-emerald-100" : "text-gray-500"}`}>
-                  {plan.desc}
-                </p>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${plan.highlight ? "text-emerald-200" : "text-emerald-500"}`} />
-                      <span className={plan.highlight ? "text-emerald-50" : "text-gray-600"}>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/auth/signin?role=customer">
-                  <Button
-                    className={`w-full ${
-                      plan.highlight
-                        ? "bg-white text-emerald-700 hover:bg-emerald-50"
-                        : "bg-emerald-600 hover:bg-emerald-700 text-white"
-                    }`}
-                  >
-                    Book Now
-                  </Button>
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <Link href="/pricing" className="btn-book-now" style={{ padding: "14px 32px", fontSize: 16 }}>
+                  BOOK IN 60 SECONDS
                 </Link>
+                <Link href="/pricing" className="btn-white hidden sm:inline-block">CHECK PRICING</Link>
+                <span className="hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full" style={{ backgroundColor: "#f0fdf4", color: "var(--primary)", border: "1px solid var(--accent)" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Bonded & Insured
+                </span>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center justify-center">
+              <Image
+                src="/banner-v2.png"
+                alt="CleanInstead professional eco-friendly cleaning team serving homes in Surrey BC Canada"
+                width={420}
+                height={420}
+                className="rounded-2xl shadow-2xl object-cover"
+                priority
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 60-Second Booking Promise */}
+      <section className="py-8 bg-white" style={{ borderBottom: "1px solid #e5e7eb" }}>
+        <div className="max-w-[1200px] mx-auto px-5">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f0fdf4" }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1B4332" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold" style={{ color: "var(--primary)" }}>The 60-Second Booking Promise</h3>
+                <p className="text-sm" style={{ color: "var(--light-text)" }}>Get an instant quote and book your first clean in under one minute. No waiting, no hassle.</p>
+              </div>
+            </div>
+            <Link href="/pricing" className="btn-primary flex-shrink-0" style={{ padding: "12px 28px" }}>GET MY INSTANT QUOTE</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Service Plans Overview */}
+      <section className="py-24 bg-white">
+        <div className="max-w-[1200px] mx-auto px-5">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl mb-4" style={{ color: "var(--primary)" }}>Three Plans for Every Home</h2>
+            <p style={{ color: "var(--light-text)", fontSize: 16, maxWidth: 600, margin: "0 auto" }}>From routine maintenance to total turnovers, we have a cleaning plan that fits your home and budget.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="ci-card text-center">
+              <div className="text-3xl mb-3">{"\ud83c\udfe1"}</div>
+              <h3 className="text-xl mb-1" style={{ color: "var(--primary)" }}>Standard Refresh</h3>
+              <p className="text-xs font-semibold mb-3" style={{ color: "var(--accent)", textTransform: "uppercase", letterSpacing: "1px" }}>The Essential Refresh</p>
+              <div className="text-2xl font-bold mb-2" style={{ color: "var(--primary)" }}>From $145</div>
+              <p className="text-sm mb-4" style={{ color: "var(--light-text)" }}>Weekly or bi-weekly maintenance. Kitchen, bathrooms, floors, dusting.</p>
+              <Link href="/services/residential" className="btn-primary text-sm" style={{ padding: "10px 24px" }}>Learn More</Link>
+            </div>
+            <div className="ci-card text-center" style={{ border: "2px solid var(--primary)" }}>
+              <div className="text-3xl mb-3">{"\u2728"}</div>
+              <h3 className="text-xl mb-1" style={{ color: "var(--primary)" }}>Deep Shine</h3>
+              <p className="text-xs font-semibold mb-3" style={{ color: "var(--accent)", textTransform: "uppercase", letterSpacing: "1px" }}>The Top-to-Bottom Clean</p>
+              <div className="text-2xl font-bold mb-2" style={{ color: "var(--primary)" }}>From $245</div>
+              <p className="text-sm mb-4" style={{ color: "var(--light-text)" }}>First-time or seasonal. Baseboards, appliances, walls, fixtures.</p>
+              <Link href="/services/deep-cleaning" className="btn-primary text-sm" style={{ padding: "10px 24px" }}>Learn More</Link>
+            </div>
+            <div className="ci-card text-center">
+              <div className="text-3xl mb-3">{"\ud83d\ude98"}</div>
+              <h3 className="text-xl mb-1" style={{ color: "var(--primary)" }}>Move-In / Move-Out</h3>
+              <p className="text-xs font-semibold mb-3" style={{ color: "var(--accent)", textTransform: "uppercase", letterSpacing: "1px" }}>The Fresh Start</p>
+              <div className="text-2xl font-bold mb-2" style={{ color: "var(--primary)" }}>From $250</div>
+              <p className="text-sm mb-4" style={{ color: "var(--light-text)" }}>Deposit returns &amp; sale-ready. Cabinets, closets, full turnover.</p>
+              <Link href="/services/move-in-out" className="btn-primary text-sm" style={{ padding: "10px 24px" }}>Learn More</Link>
+            </div>
+          </div>
+          <div className="text-center mt-8">
+            <Link href="/pricing" className="btn-primary">VIEW FULL PRICING</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* The Instead Difference */}
+      <section className="py-24" style={{ backgroundColor: "#f1f1f1" }} aria-labelledby="instead-difference-heading">
+        <div className="max-w-[1200px] mx-auto px-5">
+          <h2 className="text-center text-4xl mb-16" style={{ color: "var(--primary)" }}>
+            The &quot;Instead&quot; Difference
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {insteadDiffCards.map((card, i) => (
+              <div key={i} className="ci-card">
+                <h3 className="text-center text-xl mb-4" style={{ color: "var(--primary)" }}>{card.title}</h3>
+                <p style={{ color: "var(--light-text)", fontSize: 15 }}>{card.desc}</p>
               </div>
             ))}
           </div>
-          <p className="text-center text-sm text-gray-500 mt-8">
-            Prices based on average 1-2 bedroom home. Exact pricing provided during booking.
-          </p>
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section id="about" className="py-20 md:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Why CleanInstead?</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              We are not just a cleaning company. We are on a mission to make professional cleaning 
-              sustainable, safe, and accessible for every home in Metro Vancouver.
-            </p>
+      {/* Why Eco-Friendly? FAQ */}
+      <section className="py-24 bg-white">
+        <div className="max-w-[800px] mx-auto px-5">
+          <div className="text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-[3px] mb-3" style={{ color: "var(--accent)" }}>Health-Driven Cleaning</p>
+            <h2 className="text-4xl mb-4" style={{ color: "var(--primary)" }}>Why Eco-Friendly?</h2>
+            <p style={{ color: "var(--light-text)", fontSize: 16, maxWidth: 550, margin: "0 auto", lineHeight: 1.8 }}>Drawing on 30 years of healthcare experience, we know that the products used in your home directly affect your family&apos;s wellbeing. Here are the answers to the questions we hear most often about our green cleaning approach.</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div>
             {[
               {
-                icon: Shield,
-                title: "Barefoot Guarantee",
-                desc: "Not happy? We come back within 24 hours and re-clean for free. Walk barefoot with confidence after every clean. No questions asked, no hassle.",
+                q: "Is eco-friendly cleaning actually as effective as traditional chemical cleaning?",
+                a: "Yes. Modern green cleaning technologies utilize powerful plant-based surfactants, enzymes, and essential oils to break down grease, grime, and bacteria just as effectively as traditional methods. Natural disinfectants like citric acid and hydrogen peroxide are proven sanitizers that kill 99.9% of germs without leaving behind the toxic residue that chemical cleaners do. Our EPA-registered, hospital-grade products have been rigorously tested to meet the same performance benchmarks as conventional cleaners, so you never have to choose between safety and cleanliness.",
               },
               {
-                icon: Users,
-                title: "4-Step Vetting Process",
-                desc: "Every cleaner passes criminal background checks, reference verification, eco-product skills assessment, and insurance confirmation before entering any home.",
+                q: "Why is \"green\" cleaning safer for my children and pets?",
+                a: "Infants and pets spend significantly more time on the floor and frequently put their hands or paws in their mouths. Traditional cleaners often leave behind residues of ammonia, bleach, and phthalates that can cause skin rashes, respiratory distress, or even poisoning if ingested. Our non-toxic, plant-based products ensure that every surface your child crawls on or your pet sleeps near is clean and safe for them to explore. We think of it this way: if you wouldn\u2019t want your toddler tasting it, it shouldn\u2019t be on your floors.",
               },
               {
-                icon: Recycle,
-                title: "Zero-Waste Approach",
-                desc: "We use refillable product containers, microfiber cloths instead of disposables, and have saved over 15,000kg of plastic from landfills since launching.",
+                q: "How does eco-friendly cleaning improve my home\u2019s air quality?",
+                a: "Many conventional cleaners release Volatile Organic Compounds (VOCs) into the air, which can trigger asthma, migraines, and long-term lung damage. Studies have compared the effects of prolonged VOC exposure to smoking cigarettes indoors. CleanInstead uses low-to-no VOC products to ensure your family breathes fresh, purified air rather than lingering chemical fumes. After every clean, your home should smell like nothing at all — and that\u2019s exactly the point.",
               },
               {
-                icon: Award,
-                title: "Rewards Program",
-                desc: "Earn free services automatically. 3 cleans = free fridge clean, 6 = free windows, 10 = entire session free. Loyalty that actually pays off.",
+                q: "Are eco-friendly cleaning services more expensive?",
+                a: "While some green products carry a slightly higher upfront cost, they are often more concentrated, requiring less volume to achieve a superior clean. Furthermore, the long-term health benefits — such as reduced triggers for allergies and asthma, fewer sick days, and lower medical expenses — far outweigh any marginal cost difference. We also offer an Eco-Friendly Kit upgrade for clients who want our most premium green-certified products, available as an add-on to any service plan.",
               },
               {
-                icon: Droplets,
-                title: "Hospital-Grade Clean",
-                desc: "Our EPA-registered products kill 99.9% of bacteria using natural enzymatic reactions. Safe for children, pets, and the environment.",
+                q: "Does CleanInstead use my products or bring their own?",
+                a: "We provide all our own premium, eco-certified supplies to ensure every job meets our rigorous safety and performance standards. Our teams arrive with durable glass bottles, medical-grade microfiber cloths, and a complete toolkit. You never need to provide anything — and you\u2019ll never find single-use plastics or harsh chemicals in our kit.",
               },
               {
-                icon: Clock,
-                title: "Flexible Scheduling",
-                desc: "Book online 24/7, choose your preferred time, and reschedule for free up to 24 hours before. We work around your life, not the other way around.",
+                q: "I have a member of my household with chemical sensitivities. Is this right for us?",
+                a: "Absolutely. Our services are specifically designed for households with allergies, asthma, or chemical sensitivities. We avoid synthetic fragrances and dyes entirely, which are the most common triggers for respiratory and skin irritation. Many of our clients came to us after struggling with reactions to other cleaning companies\u2019 products, and they report immediate improvements in their symptoms after switching to CleanInstead.",
               },
-            ].map((item) => {
-              const Icon = item.icon
-              return (
-                <div key={item.title} className="text-center p-6">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                    <Icon className="w-7 h-7 text-emerald-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
+            ].map((faq, i) => (
+              <div key={i} className={activeEcoFaq === i ? "accordion-item active" : "accordion-item"}>
+                <div className="accordion-header" onClick={() => setActiveEcoFaq(activeEcoFaq === i ? null : i)}>
+                  <span>{faq.q}</span>
+                  <span className="accordion-icon">+</span>
                 </div>
-              )
-            })}
+                <div className="accordion-body" style={{ maxHeight: activeEcoFaq === i ? 400 : 0 }}>
+                  <div className="pb-6" style={{ color: "var(--light-text)", fontSize: 16, lineHeight: 1.8 }}>{faq.a}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12 flex flex-wrap gap-4 justify-center">
+            <Link href="/faq" className="btn-primary">MORE FAQS</Link>
+            <Link href="/pricing" className="btn-white">GET A QUOTE</Link>
           </div>
         </div>
       </section>
 
-      {/* Service Areas */}
-      <section className="py-16 bg-emerald-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <MapPin className="w-5 h-5 text-emerald-200" />
-            <h2 className="text-2xl font-bold text-white">Serving Metro Vancouver</h2>
+      {/* General FAQ */}
+      <section className="py-20 bg-white" aria-labelledby="faq-heading" style={{ borderTop: "1px solid #e5e7eb" }}>
+        <div className="max-w-[1200px] mx-auto px-5">
+          <h2 className="text-center text-4xl mb-16" style={{ color: "var(--primary)" }}>Common Questions</h2>
+          <div className="max-w-[800px] mx-auto">
+            {faqs.map((faq, i) => (
+              <div key={i} className={activeFaq === i ? "accordion-item active" : "accordion-item"}>
+                <div className="accordion-header" onClick={() => setActiveFaq(activeFaq === i ? null : i)}>
+                  <span>{faq.q}</span>
+                  <span className="accordion-icon">+</span>
+                </div>
+                <div className="accordion-body" style={{ maxHeight: activeFaq === i ? 300 : 0 }}>
+                  <div className="pb-6" style={{ color: "var(--light-text)", fontSize: 16, lineHeight: 1.8 }}>{faq.a}</div>
+                </div>
+              </div>
+            ))}
           </div>
-          <p className="text-emerald-100 mb-8 max-w-xl mx-auto">
-            Professional eco-friendly cleaning across the Lower Mainland. Same-day booking available for most areas.
+          <div className="text-center mt-12 flex flex-wrap gap-4 justify-center">
+            <Link href="/pricing" className="btn-primary">GET A CUSTOM QUOTE</Link>
+            <Link href="/faq" className="btn-white">MORE FAQS</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badges */}
+      <section className="py-16 bg-white">
+        <div className="max-w-[1200px] mx-auto px-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {trustBadges.map((badge, i) => (
+              <div key={i} className="text-center">
+                <span className="text-3xl block mb-2">{badge.icon}</span>
+                <p className="text-xs font-semibold" style={{ color: "var(--primary)" }}>{badge.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Before / After Gallery */}
+      <section className="py-24 bg-white">
+        <div className="max-w-[1200px] mx-auto px-5">
+          <h2 className="text-center text-4xl mb-6" style={{ color: "var(--primary)" }}>See the Difference</h2>
+          <p className="text-center mb-16 max-w-[600px] mx-auto" style={{ color: "var(--light-text)", fontSize: 16 }}>
+            Real results from real homes. Our eco-friendly approach delivers visible, lasting cleanliness.
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            {areas.map((a) => (
-              <span key={a} className="bg-emerald-600 text-white px-4 py-2 rounded-full text-sm font-medium">
-                {a}
-              </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {galleryItems.map((item, i) => (
+              <div key={i} className="gallery-card">
+                <div className="gallery-compare">
+                  <div className="gallery-side">
+                    <span className="gallery-badge">Before</span>
+                    <img src={item.before} alt={`${item.label} before`} className="gallery-img" />
+                  </div>
+                  <div className="gallery-side">
+                    <span className="gallery-badge gallery-badge-after">After</span>
+                    <img src={item.after} alt={`${item.label} after`} className="gallery-img" />
+                  </div>
+                </div>
+                <p className="text-center mt-4 font-semibold text-sm" style={{ color: "var(--primary)" }}>{item.label}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section id="reviews" className="py-20 md:py-28 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">What Our Customers Say</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Over 2,500 happy homes cleaned with an average rating of 4.9 out of 5 stars.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            {testimonials.map((t) => (
-              <div key={t.name} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  ))}
-                  {Array.from({ length: 5 - t.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-gray-200" />
-                  ))}
-                </div>
-                <p className="text-gray-700 leading-relaxed mb-4">{t.text}</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-semibold text-sm">
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                    <p className="text-gray-500 text-xs">{t.area}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" className="py-20 md:py-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-gray-600 text-lg">Everything you need to know about CleanInstead.</p>
-          </div>
-          <div className="space-y-4">
-            {faqs.map((faq) => (
-              <details key={faq.q} className="group border border-gray-200 rounded-xl p-5 hover:border-emerald-200 transition-colors">
-                <summary className="flex items-center justify-between cursor-pointer list-none font-semibold text-gray-900">
-                  {faq.q}
-                  <ChevronRight className="w-5 h-5 text-gray-400 group-open:rotate-90 transition-transform" />
-                </summary>
-                <p className="mt-3 text-gray-600 leading-relaxed text-sm">{faq.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 md:py-24 bg-gradient-to-br from-emerald-600 to-emerald-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <Leaf className="w-12 h-12 mx-auto mb-6 text-emerald-200" />
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready for a Cleaner, Greener Home?
-          </h2>
-          <p className="text-emerald-100 text-lg mb-8 max-w-2xl mx-auto">
-            Join over 2,500 happy customers who trust CleanInstead for their eco-friendly cleaning needs.
-            Book your first clean today and experience the difference.
+      <section className="py-24" style={{ backgroundColor: "#f1f1f1" }}>
+        <div className="max-w-[1200px] mx-auto px-5">
+          <h2 className="text-center text-4xl mb-6" style={{ color: "var(--primary)" }}>What Our Clients Say</h2>
+          <p className="text-center mb-16 max-w-[600px] mx-auto" style={{ color: "var(--light-text)", fontSize: 16 }}>
+            Real feedback from real customers who trust CleanInstead with their homes, offices, and businesses.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth/signin?role=customer">
-              <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 w-full sm:w-auto px-8 text-base font-semibold">
-                Book a Cleaning
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-            <a href="tel:+16044971001">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white/30 text-white hover:bg-white/10 w-full sm:w-auto px-8 text-base"
-              >
-                <Phone className="w-4 h-4 mr-2" />
-                Call (604) 497-1001
-              </Button>
-            </a>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {testimonials.slice(0, 3).map((t, i) => (
+              <div key={i} className="ci-card">
+                <div className="text-[#f1c40f] text-lg mb-3">{"★".repeat(t.stars)}</div>
+                <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--light-text)" }}>&ldquo;{t.text}&rdquo;</p>
+                <div>
+                  <p className="font-semibold text-sm" style={{ color: "var(--primary)" }}>{t.name}</p>
+                  <p className="text-xs" style={{ color: "var(--light-text)" }}>{t.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link href="/reviews" className="btn-primary">READ ALL REVIEWS</Link>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-10 mb-12">
-            <div className="md:col-span-1">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                  <Leaf className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-bold text-lg text-white">CleanInstead</span>
-              </div>
-              <p className="text-sm leading-relaxed mb-4">
-                Premium eco-friendly cleaning services for homes and businesses in Metro Vancouver, BC.
-              </p>
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="w-4 h-4 text-emerald-500" />
-                <span>Unit 105A - 14914 104 Ave, Surrey, BC V3R 1M7</span>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Services</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#services" className="hover:text-emerald-400 transition-colors">Regular Clean</a></li>
-                <li><a href="#services" className="hover:text-emerald-400 transition-colors">Deep Clean</a></li>
-                <li><a href="#services" className="hover:text-emerald-400 transition-colors">Eco Clean</a></li>
-                <li><a href="#services" className="hover:text-emerald-400 transition-colors">Move In/Out</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Company</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#about" className="hover:text-emerald-400 transition-colors">About Us</a></li>
-                <li><a href="#reviews" className="hover:text-emerald-400 transition-colors">Reviews</a></li>
-                <li><a href="#faq" className="hover:text-emerald-400 transition-colors">FAQ</a></li>
-                <li><a href="#pricing" className="hover:text-emerald-400 transition-colors">Pricing</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Contact</h4>
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-emerald-500" />
-                  <a href="tel:+16044971001" className="hover:text-emerald-400 transition-colors">(604) 497-1001</a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-emerald-500" />
-                  <a href="mailto:info@cleaninstead.com" className="hover:text-emerald-400 transition-colors">info@cleaninstead.com</a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-emerald-500" />
-                  <span>Mon-Sat: 8AM - 6PM</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm">
-              &copy; {new Date().getFullYear()} CleanInstead. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6 text-sm">
-              <a href="#" className="hover:text-emerald-400 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-emerald-400 transition-colors">Terms of Service</a>
-              <Link href="/auth/signin" className="hover:text-emerald-400 transition-colors">
-                Customer Login
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
-  )
+    </>
+  );
 }

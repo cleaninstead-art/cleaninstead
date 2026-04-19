@@ -1,0 +1,70 @@
+{
+  "name": "CleanInstead - Premium Eco-Friendly Cleaning Services",
+  "short_name": "CleanInstead",
+  "description": "Premium eco-friendly cleaning services in Surrey, Vancouver, and Metro Vancouver, BC, Canada. Book your clean in 60 seconds.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF9",
+  "theme_color": "#1B4332",
+  "orientation": "portrait-primary",
+  "lang": "en-CA",
+  "dir": "ltr",
+  "categories": ["home_services", "cleaning", "business"],
+  "icons": [
+    {
+      "src": "/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icon-150.png",
+      "sizes": "150x150",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Book a Clean",
+      "short_name": "Book Now",
+      "description": "Get an instant quote and book your cleaning service",
+      "url": "/pricing",
+      "icons": [
+        {
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Contact Us",
+      "short_name": "Contact",
+      "description": "Get in touch with our team",
+      "url": "/contact",
+      "icons": [
+        {
+          "src": "/pwa-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
