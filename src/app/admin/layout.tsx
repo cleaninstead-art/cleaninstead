@@ -130,13 +130,20 @@ export default function AdminLayout({
 
   const handleSignOut = async () => {
     await logout();
-    router.push("/");
+    window.location.href = "/auth/admin-signin";
   };
 
   useEffect(() => {
     const timer = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(timer);
   }, []);
+
+  // Auth guard: redirect to admin sign-in if not authenticated
+  useEffect(() => {
+    if (!user && !loading) {
+      window.location.href = "/auth/admin-signin";
+    }
+  }, [user, loading]);
 
   // Close mobile sheet on route change
   useEffect(() => {
@@ -149,12 +156,19 @@ export default function AdminLayout({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  if (!mounted) {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-8 h-8 border-4 border-[#95D5B2] border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-[#95D5B2] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500">Loading...</p>
+        </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
