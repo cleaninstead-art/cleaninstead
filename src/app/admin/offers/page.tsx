@@ -6,7 +6,7 @@ import {
   Copy,
   Tag,
   CalendarDays,
-  Use,
+  Ticket,
   CheckCircle2,
   XCircle,
 } from "lucide-react";
@@ -215,7 +215,7 @@ export default function AdminOffers() {
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-              <Use className="w-5 h-5 text-purple-700" />
+              <Ticket className="w-5 h-5 text-purple-700" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Redemptions</p>
