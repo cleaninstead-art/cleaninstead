@@ -85,10 +85,10 @@ export async function POST(request: NextRequest) {
       maxAge: 86400,
     })
 
-    // Also set without __Secure- for compatibility
+    // Also set without __Secure- for compatibility (no secure flag for localhost/HTTP)
     response.cookies.set("ci-session", token, {
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: "lax",
       path: "/",
       maxAge: 86400,

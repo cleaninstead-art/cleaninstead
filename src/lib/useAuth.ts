@@ -15,7 +15,7 @@ export function useAuth() {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/session")
+      const res = await fetch("/api/session", { credentials: "include" })
       const data = await res.json()
       setUser(data.user || null)
     } catch {

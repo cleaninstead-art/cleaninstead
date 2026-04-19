@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState, useSyncExternalStore } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useAuth } from "@/lib/useAuth"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
@@ -15,8 +15,6 @@ const navItems = [
   { href: "/cleaner-portal/profile", label: "Profile", icon: User },
 ]
 
-const emptySubscribe = () => () => {}
-
 export default function CleanerPortalLayout({
   children,
 }: {
@@ -25,11 +23,11 @@ export default function CleanerPortalLayout({
   const { user, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
-  const mounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  )
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!user && !loading) {

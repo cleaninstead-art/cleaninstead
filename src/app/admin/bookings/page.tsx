@@ -190,8 +190,8 @@ export default function AdminBookings() {
                   onClick={() => setActiveFilter(tab.value)}
                   className={cn(
                     activeFilter === tab.value
-                      ? "bg-[#1B4332] hover:bg-[#1B4332]/90"
-                      : ""
+                      ? "bg-[#1B4332] hover:bg-[#1B4332]/90 text-white"
+                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                   )}
                 >
                   {tab.label}

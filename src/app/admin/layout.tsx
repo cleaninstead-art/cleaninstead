@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import {
   LayoutDashboard,
@@ -122,10 +122,16 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const handleSignOut = async () => {
+    await logout();
+    router.push("/");
+  };
 
   useEffect(() => {
     const timer = requestAnimationFrame(() => setMounted(true));
@@ -266,11 +272,11 @@ export default function AdminLayout({
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-[#1B4332] text-white text-sm font-medium">
-                        AU
+                        {user?.name?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "AU"}
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden lg:block text-sm font-medium text-gray-700">
-                      Admin User
+                      {user?.name || "Admin User"}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -281,7 +287,7 @@ export default function AdminLayout({
                     <Settings className="w-4 h-4 mr-2" />
                     Profile Settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
                   </DropdownMenuItem>
