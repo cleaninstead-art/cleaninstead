@@ -1,7 +1,4 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
 
 const fallbackProfile = {
   name: "Amanda Johnson", email: "amanda@example.com", phone: "604-555-7890",
@@ -12,32 +9,55 @@ const fallbackProfile = {
   notificationsEnabled: true, specialInstructions: null,
 }
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+async function getUserFromRequest(request: NextRequest) {
+  const token = request.cookies.get("ci-session")?.value
+  if (!token) return null
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
+  try {
+    const { jwtVerify } = await import("jose")
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "cleaninstead-secret-key-2024")
+    const { payload } = await jwtVerify(token, secret)
+    return { id: payload.sub, email: payload.email, name: payload.name, role: payload.role }
+  } catch {
+    return null
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getUserFromRequest(request)
+    if (!user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    let db: any = null
+    try {
+      const mod = await import("@/lib/db")
+      db = mod.db
+    } catch (e: any) {
+      console.warn("[Customer Profile API] DB import failed, using fallback:", e?.message)
+      return NextResponse.json(fallbackProfile)
+    }
+
+    const dbUser = await db.user.findUnique({
+      where: { id: user.id },
       select: { name: true, email: true, phone: true, address: true, city: true, ecoOnly: true, notificationsEnabled: true, createdAt: true,
         customerProfile: { select: { totalBookings: true, loyaltyPoints: true, totalCleans: true, referralCode: true, preferredTime: true, petFriendly: true, ecoProducts: true, specialInstructions: true } } },
     })
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+    if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 })
 
-    const profile = user.customerProfile
-    const ecoBookings = await db.booking.count({ where: { customerId: session.user.id, serviceType: "Eco Clean", status: "completed" } })
-    const referralCount = await db.referral.count({ where: { referrerId: session.user.id, status: "completed" } })
+    const profile = dbUser.customerProfile
+    const ecoBookings = await db.booking.count({ where: { customerId: user.id, serviceType: "Eco Clean", status: "completed" } })
+    const referralCount = await db.referral.count({ where: { referrerId: user.id, status: "completed" } })
 
     return NextResponse.json({
-      name: user.name, email: user.email, phone: user.phone, address: user.address, city: user.city,
+      name: dbUser.name, email: dbUser.email, phone: dbUser.phone, address: dbUser.address, city: dbUser.city,
       loyaltyPoints: profile?.loyaltyPoints || 0, totalBookings: profile?.totalBookings || 0,
       totalCleans: profile?.totalCleans || 0, ecoBottlesSaved: ecoBookings * 3,
       referralCode: profile?.referralCode || "", referralCount,
-      memberSince: user.createdAt.toISOString().split("T")[0],
+      memberSince: dbUser.createdAt.toISOString().split("T")[0],
       preferredTime: profile?.preferredTime || "morning",
-      ecoProductsOnly: profile?.ecoProducts ?? user.ecoOnly,
+      ecoProductsOnly: profile?.ecoProducts ?? dbUser.ecoOnly,
       petFriendly: profile?.petFriendly ?? true,
-      notificationsEnabled: user.notificationsEnabled,
+      notificationsEnabled: dbUser.notificationsEnabled,
       specialInstructions: profile?.specialInstructions,
     })
   } catch (error) {

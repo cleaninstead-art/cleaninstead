@@ -1,7 +1,4 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
 
 const fallbackReferral = {
   code: "AMANDA12", referralCount: 3, creditsEarned: 45, pendingReferrals: 0,
@@ -13,28 +10,51 @@ const fallbackReferral = {
   ],
 }
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+async function getUserFromRequest(request: NextRequest) {
+  const token = request.cookies.get("ci-session")?.value
+  if (!token) return null
 
-    const profile = await db.customerProfile.findUnique({ where: { userId: session.user.id }, select: { referralCode: true } })
+  try {
+    const { jwtVerify } = await import("jose")
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "cleaninstead-secret-key-2024")
+    const { payload } = await jwtVerify(token, secret)
+    return { id: payload.sub, email: payload.email, name: payload.name, role: payload.role }
+  } catch {
+    return null
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getUserFromRequest(request)
+    if (!user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    let db: any = null
+    try {
+      const mod = await import("@/lib/db")
+      db = mod.db
+    } catch (e: any) {
+      console.warn("[Customer Referral API] DB import failed, using fallback:", e?.message)
+      return NextResponse.json(fallbackReferral)
+    }
+
+    const profile = await db.customerProfile.findUnique({ where: { userId: user.id }, select: { referralCode: true } })
     const referrals = await db.referral.findMany({
-      where: { referrerId: session.user.id },
+      where: { referrerId: user.id },
       include: { referred: { select: { name: true, email: true } } },
       orderBy: { createdAt: "desc" },
     })
 
-    const completedReferrals = referrals.filter((r) => r.status === "completed")
-    const pendingReferrals = referrals.filter((r) => r.status === "pending")
-    const totalCredits = completedReferrals.reduce((sum, r) => sum + r.creditsEarned, 0)
+    const completedReferrals = referrals.filter((r: any) => r.status === "completed")
+    const pendingReferrals = referrals.filter((r: any) => r.status === "pending")
+    const totalCredits = completedReferrals.reduce((sum: number, r: any) => sum + r.creditsEarned, 0)
 
     return NextResponse.json({
       code: profile?.referralCode || "", referralCount: completedReferrals.length,
       creditsEarned: totalCredits, pendingReferrals: pendingReferrals.length,
       referralLink: `https://cleaninstead.com/referral/${profile?.referralCode || ""}`,
       rewardPerReferral: 15, friendDiscount: 20,
-      referrals: referrals.map((r) => ({
+      referrals: referrals.map((r: any) => ({
         id: r.id, name: r.referred?.name || "Pending", email: r.referred?.email || "",
         referredDate: r.createdAt.toISOString().split("T")[0], status: r.status,
         rewardEarned: r.status === "completed", creditAmount: r.creditsEarned,

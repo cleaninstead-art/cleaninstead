@@ -1,7 +1,4 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
 
 const fallbackBookings = {
   upcoming: [
@@ -17,13 +14,36 @@ const fallbackBookings = {
   summary: { totalBookings: 12, upcomingCount: 2, pastCount: 4, totalSpent: 790, averageRating: 4.7 },
 }
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+async function getUserFromRequest(request: NextRequest) {
+  const token = request.cookies.get("ci-session")?.value
+  if (!token) return null
 
-    const customerId = session.user.id
+  try {
+    const { jwtVerify } = await import("jose")
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "cleaninstead-secret-key-2024")
+    const { payload } = await jwtVerify(token, secret)
+    return { id: payload.sub, email: payload.email, name: payload.name, role: payload.role }
+  } catch {
+    return null
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getUserFromRequest(request)
+    if (!user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const customerId = user.id
     const todayStr = new Date().toISOString().split("T")[0]
+
+    let db: any = null
+    try {
+      const mod = await import("@/lib/db")
+      db = mod.db
+    } catch (e: any) {
+      console.warn("[Customer Bookings API] DB import failed, using fallback:", e?.message)
+      return NextResponse.json(fallbackBookings)
+    }
 
     const bookings = await db.booking.findMany({
       where: { customerId },
@@ -31,7 +51,7 @@ export async function GET() {
       orderBy: { date: "desc" },
     })
 
-    const upcoming = bookings.filter((b) => b.date >= todayStr && b.status !== "cancelled" && b.status !== "completed").map((b) => ({
+    const upcoming = bookings.filter((b: any) => b.date >= todayStr && b.status !== "cancelled" && b.status !== "completed").map((b: any) => ({
       id: `#${b.bookingNumber}`, bookingDbId: b.id, date: b.date,
       dayLabel: new Date(b.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }),
       time: `${b.startTime} - ${b.endTime}`, service: b.serviceType, cleaner: b.cleaner?.name || "Unassigned",
@@ -40,19 +60,19 @@ export async function GET() {
       notes: b.notes, specialInstructions: b.specialInstructions, reviewed: b.reviewed,
     }))
 
-    const past = bookings.filter((b) => b.date < todayStr || b.status === "completed").map((b) => ({
+    const past = bookings.filter((b: any) => b.date < todayStr || b.status === "completed").map((b: any) => ({
       id: `#${b.bookingNumber}`, bookingDbId: b.id, date: b.date,
       dayLabel: new Date(b.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }),
       time: `${b.startTime} - ${b.endTime}`, service: b.serviceType, cleaner: b.cleaner?.name || "Unassigned",
       cleanerRating: b.cleaner?.cleanerProfile?.rating || 0, amount: b.amount, address: b.address,
       status: b.status === "completed" ? "Completed" : b.status.charAt(0).toUpperCase() + b.status.slice(1).replace("_", " "),
-      reviewed: b.reviewed, rating: b.reviews.length > 0 ? b.reviews[0].rating : null,
+      reviewed: b.reviewed, rating: b.reviews?.length > 0 ? b.reviews[0].rating : null,
     }))
 
-    const completedCount = past.filter((b) => b.status === "Completed").length
-    const totalSpent = bookings.filter((b) => b.status === "completed").reduce((sum, b) => sum + b.amount, 0)
-    const allRatings = bookings.flatMap((b) => b.reviews).map((r) => r.rating)
-    const averageRating = allRatings.length > 0 ? Math.round((allRatings.reduce((a, b) => a + b, 0) / allRatings.length) * 10) / 10 : null
+    const completedCount = past.filter((b: any) => b.status === "Completed").length
+    const totalSpent = bookings.filter((b: any) => b.status === "completed").reduce((sum: number, b: any) => sum + b.amount, 0)
+    const allRatings = bookings.flatMap((b: any) => b.reviews || []).map((r: any) => r.rating)
+    const averageRating = allRatings.length > 0 ? Math.round((allRatings.reduce((a: number, b: number) => a + b, 0) / allRatings.length) * 10) / 10 : null
 
     return NextResponse.json({ upcoming, past, summary: { totalBookings: bookings.length, upcomingCount: upcoming.length, pastCount: past.length, totalSpent: Math.round(totalSpent), averageRating } })
   } catch (error) {

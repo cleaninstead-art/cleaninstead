@@ -1,7 +1,4 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
 
 const fallbackToday = {
   date: new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
@@ -14,13 +11,36 @@ const fallbackToday = {
   unreadMessages: 2,
 }
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+async function getUserFromRequest(request: NextRequest) {
+  const token = request.cookies.get("ci-session")?.value
+  if (!token) return null
 
-    const cleanerId = session.user.id
+  try {
+    const { jwtVerify } = await import("jose")
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "cleaninstead-secret-key-2024")
+    const { payload } = await jwtVerify(token, secret)
+    return { id: payload.sub, email: payload.email, name: payload.name, role: payload.role }
+  } catch {
+    return null
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getUserFromRequest(request)
+    if (!user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const cleanerId = user.id
     const todayStr = new Date().toISOString().split("T")[0]
+
+    let db: any = null
+    try {
+      const mod = await import("@/lib/db")
+      db = mod.db
+    } catch (e: any) {
+      console.warn("[Today API] DB import failed, using fallback:", e?.message)
+      return NextResponse.json(fallbackToday)
+    }
 
     const todayBookings = await db.booking.findMany({
       where: { cleanerId, date: todayStr, status: { in: ["confirmed", "in_progress", "completed"] } },
@@ -28,18 +48,18 @@ export async function GET() {
       orderBy: { startTime: "asc" },
     })
 
-    const completed = todayBookings.filter((b) => b.status === "completed").length
-    const upcoming = todayBookings.filter((b) => b.status !== "completed").length
-    const completedEarnings = todayBookings.filter((b) => b.status === "completed").reduce((sum, b) => sum + b.amount, 0)
-    const totalEarnings = todayBookings.reduce((sum, b) => sum + b.amount, 0)
+    const completed = todayBookings.filter((b: any) => b.status === "completed").length
+    const upcoming = todayBookings.filter((b: any) => b.status !== "completed").length
+    const completedEarnings = todayBookings.filter((b: any) => b.status === "completed").reduce((sum: number, b: any) => sum + b.amount, 0)
+    const totalEarnings = todayBookings.reduce((sum: number, b: any) => sum + b.amount, 0)
 
-    const jobs = todayBookings.map((b) => {
-      const customerName = b.customer.name || "Unknown"
+    const jobs = todayBookings.map((b: any) => {
+      const customerName = b.customer?.name || "Unknown"
       const initials = customerName.split(" ").map((n: string) => n[0]).join("").toUpperCase()
       let status = "upcoming"
       if (b.status === "completed") status = "completed"
       else if (b.status === "in_progress") status = "in_progress"
-      return { id: b.id, bookingNumber: b.bookingNumber, customerName, customerInitials: initials, customerPhone: b.customer.phone, time: b.startTime, endTime: b.endTime, serviceType: b.serviceType, address: b.address, amount: b.amount, status, progress: b.cleanerJob?.progress || 0, specialInstructions: b.specialInstructions, accessInfo: b.accessInfo, notes: b.notes }
+      return { id: b.id, bookingNumber: b.bookingNumber, customerName, customerInitials: initials, customerPhone: b.customer?.phone, time: b.startTime, endTime: b.endTime, serviceType: b.serviceType, address: b.address, amount: b.amount, status, progress: b.cleanerJob?.progress || 0, specialInstructions: b.specialInstructions, accessInfo: b.accessInfo, notes: b.notes }
     })
 
     const unreadMessages = await db.message.count({ where: { receiverId: cleanerId, isRead: false } })
