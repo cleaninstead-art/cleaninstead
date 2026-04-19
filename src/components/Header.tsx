@@ -3,29 +3,30 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/useAuth";
 import { navLinks, companyInfo } from "@/lib/data";
 
 export default function Header() {
-  const sessionData = useSession();
-  const session = sessionData?.data || null;
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const servicesOpen = useHoverDropdown();
   const areasOpen = useHoverDropdown();
 
-  const servicesChildren = navLinks.find(l => l.label === "Services")?.children || [];
-  const areasChildren = navLinks.find(l => l.label === "Service Areas")?.children || [];
-
-  // Determine auth links based on session
-  const isLoggedIn = !!session?.user;
-  const userRole = session?.user?.role as string | undefined;
+  const isLoggedIn = !!user;
+  const userRole = user?.role;
   const dashboardLink = userRole === "admin"
     ? "/admin"
     : userRole === "cleaner"
     ? "/cleaner-portal"
-    : userRole === "customer"
-    ? "/my-account"
     : "/my-account";
+
+  const handleSignOut = async () => {
+    await logout();
+    router.push("/");
+    setMobileMenuOpen(false);
+  };
 
   return (
     <header className="header-fixed" role="banner">
@@ -63,15 +64,14 @@ export default function Header() {
                   <path d={servicesOpen.isOpen ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6"} />
                 </svg>
               </Link>
-              {/* Invisible bridge to prevent gap closing */}
               <div className="absolute top-full left-0 right-0 h-2" />
               {servicesOpen.isOpen && (
                 <div className="dropdown-panel">
-                  {servicesChildren.map(c => (
+                  {navLinks.find(l => l.label === "Services")?.children?.map(c => (
                     <Link key={c.href} href={c.href} className="dropdown-item">
                       {c.label}
                     </Link>
-                  ))}
+                  )) || []}
                 </div>
               )}
             </li>
@@ -94,15 +94,14 @@ export default function Header() {
                   <path d={areasOpen.isOpen ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6"} />
                 </svg>
               </Link>
-              {/* Invisible bridge to prevent gap closing */}
               <div className="absolute top-full left-0 right-0 h-2" />
               {areasOpen.isOpen && (
                 <div className="dropdown-panel">
-                  {areasChildren.map(c => (
+                  {navLinks.find(l => l.label === "Service Areas")?.children?.map(c => (
                     <Link key={c.href} href={c.href} className="dropdown-item">
                       {c.label}
                     </Link>
-                  ))}
+                  )) || []}
                 </div>
               )}
             </li>
@@ -125,7 +124,7 @@ export default function Header() {
             </li>
 
             {/* Auth Links - Desktop */}
-            {!isLoggedIn ? (
+            {!loading && !isLoggedIn ? (
               <>
                 <li>
                   <Link
@@ -147,7 +146,7 @@ export default function Header() {
                   </Link>
                 </li>
               </>
-            ) : (
+            ) : !loading && isLoggedIn ? (
               <>
                 <li>
                   <Link
@@ -155,19 +154,19 @@ export default function Header() {
                     className="nav-link font-semibold !text-[var(--primary)] hover:!text-[var(--accent)] inline-flex items-center gap-1.5"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    {session.user?.name?.split(" ")[0] || "Account"}
+                    {user?.name?.split(" ")[0] || "Account"}
                   </Link>
                 </li>
                 <li>
                   <button
-                    onClick={() => signOut({ callbackUrl: "/" })}
+                    onClick={handleSignOut}
                     className="nav-link font-medium !text-gray-500 hover:!text-red-500 bg-transparent border-none cursor-pointer text-sm"
                   >
                     Sign Out
                   </button>
                 </li>
               </>
-            )}
+            ) : null}
 
             {/* BOOK NOW */}
             <li className="ml-1">
@@ -201,11 +200,11 @@ export default function Header() {
               <Link href="/services" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link font-semibold">
                 Services
               </Link>
-              {servicesChildren.map(c => (
+              {navLinks.find(l => l.label === "Services")?.children?.map(c => (
                 <Link key={c.href} href={c.href} onClick={() => setMobileMenuOpen(false)} className="mobile-nav-sub">
                   {c.label}
                 </Link>
-              ))}
+              )) || []}
             </div>
 
             <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">Pricing</Link>
@@ -214,11 +213,11 @@ export default function Header() {
               <Link href="/locations" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link font-semibold">
                 Service Areas
               </Link>
-              {areasChildren.map(c => (
+              {navLinks.find(l => l.label === "Service Areas")?.children?.map(c => (
                 <Link key={c.href} href={c.href} onClick={() => setMobileMenuOpen(false)} className="mobile-nav-sub">
                   {c.label}
                 </Link>
-              ))}
+              )) || []}
             </div>
 
             <Link href="/tips" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">Tips</Link>
@@ -233,7 +232,7 @@ export default function Header() {
             </a>
 
             {/* Mobile Auth Links */}
-            {!isLoggedIn ? (
+            {!loading && !isLoggedIn ? (
               <>
                 <Link href="/auth/signin" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link font-semibold" style={{ color: "var(--primary)" }}>
                   Login
@@ -242,19 +241,19 @@ export default function Header() {
                   Register
                 </Link>
               </>
-            ) : (
+            ) : !loading && isLoggedIn ? (
               <>
                 <Link href={dashboardLink} onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link font-semibold" style={{ color: "var(--primary)" }}>
-                  My Account ({session.user?.name?.split(" ")[0] || "Account"})
+                  My Account ({user?.name?.split(" ")[0] || "Account"})
                 </Link>
                 <button
-                  onClick={() => { setMobileMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+                  onClick={handleSignOut}
                   className="mobile-nav-link font-medium text-red-500 bg-transparent border-none cursor-pointer w-full text-left"
                 >
                   Sign Out
                 </button>
               </>
-            )}
+            ) : null}
 
             <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="btn-book-now mt-3 w-full text-center block" style={{ justifyContent: "center" }}>
               BOOK NOW
@@ -277,7 +276,6 @@ function useHoverDropdown() {
     if (open) {
       setIsOpen(true);
     } else {
-      // Small delay to allow mouse to cross the bridge gap
       timeoutRef.current = setTimeout(() => setIsOpen(false), 150);
     }
   };

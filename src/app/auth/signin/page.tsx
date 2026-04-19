@@ -1,7 +1,6 @@
 "use client"
 
 import { Suspense, useState } from "react"
-import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Leaf, User, Shield, Sparkles, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -28,6 +27,12 @@ function getInitialCredentials(roleParam: string | null) {
   return { email: "", password: "" }
 }
 
+function getRedirectPath(role: string) {
+  if (role === "admin") return "/admin"
+  if (role === "cleaner") return "/cleaner-portal"
+  return "/my-account"
+}
+
 function SignInForm() {
   const searchParams = useSearchParams()
   const roleParam = searchParams.get("role")
@@ -46,22 +51,27 @@ function SignInForm() {
     setError("")
     setLoading(true)
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    })
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
 
-    setLoading(false)
+      const data = await res.json()
 
-    if (result?.error) {
-      setError("Invalid email or password")
-      return
+      if (data.success && data.user) {
+        // Login successful - redirect to the appropriate dashboard
+        router.push(getRedirectPath(role))
+      } else {
+        setError(data.error || "Invalid email or password")
+      }
+    } catch (err: any) {
+      console.error("Sign-in error:", err)
+      setError("An error occurred. Please try again.")
+    } finally {
+      setLoading(false)
     }
-
-    if (role === "admin") router.push("/admin")
-    else if (role === "cleaner") router.push("/cleaner-portal")
-    else router.push("/my-account")
   }
 
   const fillDemo = (demoEmail: string) => {

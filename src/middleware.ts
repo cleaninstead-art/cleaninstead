@@ -4,8 +4,11 @@ import type { NextRequest } from "next/server"
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Check for both development and production session cookie names
+  // Check for our custom session cookie (ci-session)
+  // Also check NextAuth cookies for backward compatibility
   const token =
+    request.cookies.get("ci-session")?.value ||
+    request.cookies.get("__Secure-ci-session")?.value ||
     request.cookies.get("next-auth.session-token")?.value ||
     request.cookies.get("__Secure-next-auth.session-token")?.value
 
