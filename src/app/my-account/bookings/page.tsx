@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   Clock,
@@ -38,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 interface Booking {
   id: string;
   date: string;
+  dayLabel: string;
   time: string;
   service: string;
   cleaner: string;
@@ -46,93 +47,23 @@ interface Booking {
   address: string;
   status: "Confirmed" | "Pending" | "Completed" | "Cancelled";
   reviewed?: boolean;
+  rating?: number;
+  notes?: string | null;
 }
 
-const upcomingBookings: Booking[] = [
-  {
-    id: "#1057",
-    date: "Sat, Apr 26, 2025",
-    time: "9:00 AM - 11:00 AM",
-    service: "Regular Clean",
-    cleaner: "Maria Santos",
-    cleanerRating: 4.9,
-    amount: 120,
-    address: "123 Elm Street, Surrey",
-    status: "Confirmed",
-  },
-  {
-    id: "#1058",
-    date: "Wed, Apr 30, 2025",
-    time: "2:00 PM - 4:00 PM",
-    service: "Deep Clean",
-    cleaner: "James Wilson",
-    cleanerRating: 4.7,
-    amount: 180,
-    address: "123 Elm Street, Surrey",
-    status: "Pending",
-  },
-];
+interface BookingSummary {
+  totalBookings: number;
+  upcomingCount: number;
+  pastCount: number;
+  totalSpent: number;
+  averageRating: number;
+}
 
-const pastBookings: Booking[] = [
-  {
-    id: "#1056",
-    date: "Sat, Apr 19, 2025",
-    time: "9:00 AM - 11:00 AM",
-    service: "Regular Clean",
-    cleaner: "Maria Santos",
-    cleanerRating: 4.9,
-    amount: 120,
-    address: "123 Elm Street, Surrey",
-    status: "Completed",
-    reviewed: true,
-  },
-  {
-    id: "#1049",
-    date: "Sat, Apr 12, 2025",
-    time: "10:00 AM - 12:00 PM",
-    service: "Move-In Clean",
-    cleaner: "Sarah Chen",
-    cleanerRating: 4.8,
-    amount: 250,
-    address: "456 Oak Avenue, Vancouver",
-    status: "Completed",
-    reviewed: true,
-  },
-  {
-    id: "#1042",
-    date: "Sat, Apr 5, 2025",
-    time: "9:00 AM - 11:00 AM",
-    service: "Regular Clean",
-    cleaner: "Maria Santos",
-    cleanerRating: 4.9,
-    amount: 120,
-    address: "123 Elm Street, Surrey",
-    status: "Completed",
-  },
-  {
-    id: "#1035",
-    date: "Sat, Mar 29, 2025",
-    time: "1:00 PM - 3:00 PM",
-    service: "Deep Clean",
-    cleaner: "James Wilson",
-    cleanerRating: 4.7,
-    amount: 180,
-    address: "123 Elm Street, Surrey",
-    status: "Completed",
-    reviewed: true,
-  },
-  {
-    id: "#1028",
-    date: "Sat, Mar 22, 2025",
-    time: "9:00 AM - 11:00 AM",
-    service: "Regular Clean",
-    cleaner: "Sarah Chen",
-    cleanerRating: 4.8,
-    amount: 120,
-    address: "123 Elm Street, Surrey",
-    status: "Completed",
-  },
-];
+interface BookingsResponse {
+  upcoming: Booking[];
+  past: Booking[];
+  summary: BookingSummary;
+}
 
 function getStatusBadge(status: string) {
   const styles: Record<string, string> = {
@@ -229,7 +160,7 @@ function BookingCard({
             <div className="space-y-3">
               <div className="flex items-center gap-2.5">
                 <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-700">{booking.date}</span>
+                <span className="text-sm text-gray-700">{booking.dayLabel}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -365,6 +296,36 @@ function BookingCard({
 }
 
 export default function BookingsPage() {
+  const [loading, setLoading] = useState(true);
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+  const [pastBookings, setPastBookings] = useState<Booking[]>([]);
+
+  useEffect(() => {
+    async function fetchBookings() {
+      try {
+        const res = await fetch("/api/customer/bookings");
+        if (res.ok) {
+          const data: BookingsResponse = await res.json();
+          setUpcomingBookings(data.upcoming);
+          setPastBookings(data.past);
+        }
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBookings();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-[#1B4332]/30 border-t-[#1B4332] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Page Header */}

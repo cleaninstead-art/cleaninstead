@@ -2,17 +2,6 @@ import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "@/lib/db"
 
-const users: Record<string, { password: string; role: string; name: string }> = {
-  "admin@cleaninstead.com": { password: "admin123", role: "admin", name: "Admin User" },
-  "maria@cleaninstead.com": { password: "cleaner123", role: "cleaner", name: "Maria Santos" },
-  "james@cleaninstead.com": { password: "cleaner123", role: "cleaner", name: "James Wilson" },
-  "sarah@cleaninstead.com": { password: "cleaner123", role: "cleaner", name: "Sarah Chen" },
-  "amanda@example.com": { password: "customer123", role: "customer", name: "Amanda Johnson" },
-  "bob@example.com": { password: "customer123", role: "customer", name: "Bob Martinez" },
-  "carol@example.com": { password: "customer123", role: "customer", name: "Carol Williams" },
-  "david@example.com": { password: "customer123", role: "customer", name: "David Thompson" },
-}
-
 export const authOptions: any = {
   providers: [
     CredentialsProvider({
@@ -24,16 +13,23 @@ export const authOptions: any = {
       async authorize(credentials: any) {
         if (!credentials?.email || !credentials?.password) return null
 
-        const demoUser = users[credentials.email]
-        if (!demoUser) return null
+        const user = await db.user.findUnique({
+          where: { email: credentials.email },
+          include: {
+            cleanerProfile: true,
+            customerProfile: true,
+          },
+        })
 
-        if (demoUser.password !== credentials.password) return null
+        if (!user) return null
+        if (user.password !== credentials.password) return null
 
         return {
-          id: demoUser.email,
-          email: credentials.email,
-          name: demoUser.name,
-          role: demoUser.role,
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          image: user.avatar,
         }
       },
     }),

@@ -1,70 +1,95 @@
 import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function GET() {
-  const today = new Date()
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
-  const data = {
-    date: today.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }),
-    summary: {
-      totalJobs: 3,
-      completed: 1,
-      upcoming: 2,
-      totalEarnings: 395,
-      completedEarnings: 95,
-    },
-    jobs: [
-      {
-        id: "job-1",
-        customerName: "Amanda Johnson",
-        customerInitials: "AJ",
-        customerPhone: "604-555-2345",
-        time: "9:00 AM",
-        endTime: "11:00 AM",
-        serviceType: "Regular Clean",
-        address: "123 Elm Street, Surrey",
-        amount: 120,
-        status: "upcoming",
-        specialInstructions:
-          "Please be careful with the antique dining table. Use only the provided microfiber cloths. The cat may be in the living room — please do not let it outside.",
-        accessInfo: "Key under the front mat. Ring doorbell first.",
+    const cleanerId = session.user.id
+    const today = new Date()
+    const todayStr = today.toISOString().split("T")[0]
+
+    // Get today's jobs with cleaner job details
+    const todayBookings = await db.booking.findMany({
+      where: {
+        cleanerId,
+        date: todayStr,
+        status: { in: ["confirmed", "in_progress", "completed"] },
       },
-      {
-        id: "job-2",
-        customerName: "Bob Martinez",
-        customerInitials: "BM",
-        customerPhone: "604-555-3456",
-        time: "12:00 PM",
-        endTime: "2:00 PM",
-        serviceType: "Deep Clean",
-        address: "456 Oak Avenue, Vancouver",
-        amount: 180,
-        status: "upcoming",
-        specialInstructions:
-          "Focus on kitchen and bathrooms. Oven needs a deep clean. Grout in the master bathroom shower needs attention. Please bring the steam cleaner.",
-        accessInfo: "Door code: 4521#. Back door is unlocked.",
+      include: {
+        customer: { select: { name: true, phone: true } },
+        cleanerJob: true,
       },
-      {
-        id: "job-3",
-        customerName: "Carol Williams",
-        customerInitials: "CW",
-        customerPhone: "604-555-4567",
-        time: "3:00 PM",
-        endTime: "4:30 PM",
-        serviceType: "Eco Clean",
-        address: "789 Pine Road, Burnaby",
-        amount: 95,
-        status: "completed",
-        specialInstructions:
-          "Please use only eco-friendly products. Carol has allergies — no scented products. Air purifier is in the bedroom, please leave it on.",
-        accessInfo: "Spare key in the lockbox. Code: 1984.",
+      orderBy: { startTime: "asc" },
+    })
+
+    const completed = todayBookings.filter((b) => b.status === "completed").length
+    const upcoming = todayBookings.filter((b) => b.status !== "completed").length
+    const completedEarnings = todayBookings
+      .filter((b) => b.status === "completed")
+      .reduce((sum, b) => sum + b.amount, 0)
+    const totalEarnings = todayBookings.reduce((sum, b) => sum + b.amount, 0)
+
+    const jobs = todayBookings.map((b) => {
+      const customerName = b.customer.name || "Unknown"
+      const initials = customerName.split(" ").map((n: string) => n[0]).join("").toUpperCase()
+
+      let status = "upcoming"
+      if (b.status === "completed") status = "completed"
+      else if (b.status === "in_progress") status = "in_progress"
+      else if (b.cleanerJob?.status === "in_progress") status = "in_progress"
+
+      return {
+        id: b.id,
+        bookingNumber: b.bookingNumber,
+        customerName,
+        customerInitials: initials,
+        customerPhone: b.customer.phone,
+        time: b.startTime,
+        endTime: b.endTime,
+        serviceType: b.serviceType,
+        address: b.address,
+        amount: b.amount,
+        status,
+        progress: b.cleanerJob?.progress || 0,
+        specialInstructions: b.specialInstructions,
+        accessInfo: b.accessInfo,
+        notes: b.notes,
+      }
+    })
+
+    // Get unread message count
+    const unreadMessages = await db.message.count({
+      where: {
+        receiverId: cleanerId,
+        isRead: false,
       },
-    ],
+    })
+
+    return NextResponse.json({
+      date: today.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+      summary: {
+        totalJobs: todayBookings.length,
+        completed,
+        upcoming,
+        totalEarnings: Math.round(totalEarnings),
+        completedEarnings: Math.round(completedEarnings),
+      },
+      jobs,
+      unreadMessages,
+    })
+  } catch (error) {
+    console.error("Cleaner today API error:", error)
+    return NextResponse.json({ error: "Failed to fetch today's data" }, { status: 500 })
   }
-
-  return NextResponse.json(data)
 }

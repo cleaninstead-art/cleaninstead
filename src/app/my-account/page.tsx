@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   Calendar,
   Clock,
@@ -23,16 +24,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-
-const nextBooking = {
-  date: "Saturday, April 26, 2025",
-  time: "9:00 AM - 11:00 AM",
-  service: "Regular Clean",
-  cleaner: "Maria Santos",
-  cleanerRating: 4.9,
-  address: "123 Elm Street, Surrey",
-  bookingId: "#1057",
-};
 
 const loyaltyData = {
   currentCleans: 6,
@@ -87,15 +78,79 @@ const recentActivity = [
   },
 ];
 
+interface BookingSummary {
+  totalBookings: number;
+  upcomingCount: number;
+  pastCount: number;
+  totalSpent: number;
+  averageRating: number;
+}
+
+interface Booking {
+  id: string;
+  date: string;
+  dayLabel: string;
+  time: string;
+  service: string;
+  cleaner: string;
+  cleanerRating: number;
+  amount: number;
+  address: string;
+  status: string;
+  notes: string | null;
+  reviewed?: boolean;
+  rating?: number;
+}
+
+interface BookingsResponse {
+  upcoming: Booking[];
+  past: Booking[];
+  summary: BookingSummary;
+}
+
 export default function CustomerDashboard() {
+  const { data: session } = useSession();
+  const [loading, setLoading] = useState(true);
+  const [bookingsData, setBookingsData] = useState<BookingsResponse | null>(null);
+
+  useEffect(() => {
+    async function fetchBookings() {
+      try {
+        const res = await fetch("/api/customer/bookings");
+        if (res.ok) {
+          const data = await res.json();
+          setBookingsData(data);
+        }
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBookings();
+  }, []);
+
+  const nextBooking = bookingsData?.upcoming?.[0];
+  const summary = bookingsData?.summary;
+
   const loyaltyPercent = (loyaltyData.currentCleans / loyaltyData.targetCleans) * 100;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-[#1B4332]/30 border-t-[#1B4332] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const userName = session?.user?.name || "Amanda";
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Welcome */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-          Welcome back, Amanda
+          Welcome back, {userName}
         </h1>
         <p className="text-gray-500 mt-1">
           Here&apos;s what&apos;s happening with your cleaning account today.
@@ -137,129 +192,143 @@ export default function CustomerDashboard() {
                 </h2>
               </div>
               <Badge className="bg-[#95D5B2] text-[#1B4332] font-medium border-0">
-                Confirmed
+                {nextBooking?.status || "Confirmed"}
               </Badge>
             </div>
           </div>
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Calendar className="w-4 h-4 text-[#1B4332]" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
-                      Date
-                    </p>
-                    <p className="text-sm font-medium text-gray-800">
-                      {nextBooking.date}
-                    </p>
-                  </div>
-                </div>
+            {nextBooking ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Calendar className="w-4 h-4 text-[#1B4332]" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                          Date
+                        </p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {nextBooking.dayLabel}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Clock className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
-                      Time
-                    </p>
-                    <p className="text-sm font-medium text-gray-800">
-                      {nextBooking.time}
-                    </p>
-                  </div>
-                </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Clock className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                          Time
+                        </p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {nextBooking.time}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles className="w-4 h-4 text-purple-600" />
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Sparkles className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                          Service
+                        </p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {nextBooking.service}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
-                      Service
-                    </p>
-                    <p className="text-sm font-medium text-gray-800">
-                      {nextBooking.service}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <User className="w-4 h-4 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
-                      Cleaner
-                    </p>
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium text-gray-800">
-                        {nextBooking.cleaner}
-                      </p>
-                      <div className="flex items-center gap-0.5 text-amber-500">
-                        <Star className="w-3.5 h-3.5 fill-current" />
-                        <span className="text-xs font-medium">
-                          {nextBooking.cleanerRating}
-                        </span>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <User className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                          Cleaner
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-gray-800">
+                            {nextBooking.cleaner}
+                          </p>
+                          <div className="flex items-center gap-0.5 text-amber-500">
+                            <Star className="w-3.5 h-3.5 fill-current" />
+                            <span className="text-xs font-medium">
+                              {nextBooking.cleanerRating}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <MapPin className="w-4 h-4 text-rose-500" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                          Address
+                        </p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {nextBooking.address}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <CreditCard className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                          Booking ID
+                        </p>
+                        <p className="text-sm font-medium text-gray-800">
+                          {nextBooking.id}
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <MapPin className="w-4 h-4 text-rose-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
-                      Address
-                    </p>
-                    <p className="text-sm font-medium text-gray-800">
-                      {nextBooking.address}
-                    </p>
-                  </div>
-                </div>
+                <Separator className="my-5" />
 
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <CreditCard className="w-4 h-4 text-gray-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
-                      Booking ID
-                    </p>
-                    <p className="text-sm font-medium text-gray-800">
-                      {nextBooking.bookingId}
-                    </p>
-                  </div>
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/my-account/bookings">
+                    <Button
+                      variant="outline"
+                      className="border-[#1B4332] text-[#1B4332] hover:bg-[#1B4332]/5"
+                    >
+                      View Details
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    className="text-gray-600 hover:bg-gray-50"
+                  >
+                    Reschedule
+                    <Calendar className="w-4 h-4 ml-1" />
+                  </Button>
                 </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-700 mb-1">
+                  No Upcoming Bookings
+                </h3>
+                <p className="text-sm text-gray-400">
+                  You don&apos;t have any upcoming cleanings scheduled.
+                </p>
               </div>
-            </div>
-
-            <Separator className="my-5" />
-
-            <div className="flex flex-wrap gap-3">
-              <Link href="/my-account/bookings">
-                <Button
-                  variant="outline"
-                  className="border-[#1B4332] text-[#1B4332] hover:bg-[#1B4332]/5"
-                >
-                  View Details
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
-              <Button
-                variant="outline"
-                className="text-gray-600 hover:bg-gray-50"
-              >
-                Reschedule
-                <Calendar className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -400,7 +469,7 @@ export default function CustomerDashboard() {
         {[
           {
             label: "Total Bookings",
-            value: "12",
+            value: summary?.totalBookings?.toString() || "0",
             icon: Calendar,
             color: "text-[#1B4332]",
             bg: "bg-emerald-50",

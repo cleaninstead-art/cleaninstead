@@ -1,86 +1,37 @@
-export async function GET() {
-  const transactions = [
-    {
-      id: "TXN-2025-001",
-      bookingId: 1001,
-      customerName: "Amanda Johnson",
-      amount: 120,
-      status: "captured",
-      date: "2025-01-15T10:30:00Z",
-    },
-    {
-      id: "TXN-2025-002",
-      bookingId: 1002,
-      customerName: "Michael Chen",
-      amount: 220,
-      status: "captured",
-      date: "2025-01-15T11:45:00Z",
-    },
-    {
-      id: "TXN-2025-003",
-      bookingId: 1003,
-      customerName: "Sarah Williams",
-      amount: 350,
-      status: "pending",
-      date: "2025-01-16T08:15:00Z",
-    },
-    {
-      id: "TXN-2025-004",
-      bookingId: 1004,
-      customerName: "David Brown",
-      amount: 150,
-      status: "captured",
-      date: "2025-01-16T14:20:00Z",
-    },
-    {
-      id: "TXN-2025-005",
-      bookingId: 1005,
-      customerName: "Emily Davis",
-      amount: 120,
-      status: "captured",
-      date: "2025-01-17T09:00:00Z",
-    },
-    {
-      id: "TXN-2025-006",
-      bookingId: 1006,
-      customerName: "James Wilson",
-      amount: 220,
-      status: "refunded",
-      date: "2025-01-17T13:30:00Z",
-    },
-    {
-      id: "TXN-2025-007",
-      bookingId: 1007,
-      customerName: "Lisa Park",
-      amount: 100,
-      status: "refunded",
-      date: "2025-01-18T08:45:00Z",
-    },
-    {
-      id: "TXN-2025-008",
-      bookingId: 1008,
-      customerName: "Robert Taylor",
-      amount: 300,
-      status: "pending",
-      date: "2025-01-18T10:10:00Z",
-    },
-    {
-      id: "TXN-2025-009",
-      bookingId: 1009,
-      customerName: "Jennifer Martinez",
-      amount: 180,
-      status: "captured",
-      date: "2025-01-19T09:25:00Z",
-    },
-    {
-      id: "TXN-2025-010",
-      bookingId: 1010,
-      customerName: "Christopher Lee",
-      amount: 110,
-      status: "pending",
-      date: "2025-01-19T14:50:00Z",
-    },
-  ];
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
 
-  return Response.json(transactions);
+export async function GET() {
+  try {
+    const transactions = await db.transaction.findMany({
+      include: {
+        booking: {
+          select: { bookingNumber: true, serviceType: true },
+        },
+        customer: {
+          select: { name: true, email: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    })
+
+    return NextResponse.json(
+      transactions.map((t) => ({
+        id: t.transactionId,
+        bookingId: t.booking?.bookingNumber,
+        customerName: t.customer.name,
+        customerEmail: t.customer.email,
+        serviceType: t.booking?.serviceType,
+        amount: t.amount,
+        status: t.status,
+        method: t.method,
+        date: t.createdAt.toISOString(),
+        capturedAt: t.capturedAt?.toISOString() || null,
+        refundedAt: t.refundedAt?.toISOString() || null,
+      }))
+    )
+  } catch (error) {
+    console.error("Transactions API error:", error)
+    return NextResponse.json({ error: "Failed to fetch transactions" }, { status: 500 })
+  }
 }

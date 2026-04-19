@@ -1,117 +1,102 @@
-import { NextResponse } from "next/server";
-
-const upcomingBookings = [
-  {
-    id: "#1057",
-    date: "2025-04-26",
-    dayLabel: "Sat, Apr 26, 2025",
-    time: "9:00 AM - 11:00 AM",
-    service: "Regular Clean",
-    cleaner: "Maria Santos",
-    cleanerRating: 4.9,
-    amount: 120,
-    address: "123 Elm Street, Surrey",
-    status: "Confirmed",
-    notes: null,
-  },
-  {
-    id: "#1058",
-    date: "2025-04-30",
-    dayLabel: "Wed, Apr 30, 2025",
-    time: "2:00 PM - 4:00 PM",
-    service: "Deep Clean",
-    cleaner: "James Wilson",
-    cleanerRating: 4.7,
-    amount: 180,
-    address: "123 Elm Street, Surrey",
-    status: "Pending",
-    notes: "Focus on kitchen and bathrooms",
-  },
-];
-
-const pastBookings = [
-  {
-    id: "#1056",
-    date: "2025-04-19",
-    dayLabel: "Sat, Apr 19, 2025",
-    time: "9:00 AM - 11:00 AM",
-    service: "Regular Clean",
-    cleaner: "Maria Santos",
-    cleanerRating: 4.9,
-    amount: 120,
-    address: "123 Elm Street, Surrey",
-    status: "Completed",
-    reviewed: true,
-    rating: 5,
-  },
-  {
-    id: "#1049",
-    date: "2025-04-12",
-    dayLabel: "Sat, Apr 12, 2025",
-    time: "10:00 AM - 12:00 PM",
-    service: "Move-In Clean",
-    cleaner: "Sarah Chen",
-    cleanerRating: 4.8,
-    amount: 250,
-    address: "456 Oak Avenue, Vancouver",
-    status: "Completed",
-    reviewed: true,
-    rating: 4,
-  },
-  {
-    id: "#1042",
-    date: "2025-04-05",
-    dayLabel: "Sat, Apr 5, 2025",
-    time: "9:00 AM - 11:00 AM",
-    service: "Regular Clean",
-    cleaner: "Maria Santos",
-    cleanerRating: 4.9,
-    amount: 120,
-    address: "123 Elm Street, Surrey",
-    status: "Completed",
-    reviewed: false,
-    rating: null,
-  },
-  {
-    id: "#1035",
-    date: "2025-03-29",
-    dayLabel: "Sat, Mar 29, 2025",
-    time: "1:00 PM - 3:00 PM",
-    service: "Deep Clean",
-    cleaner: "James Wilson",
-    cleanerRating: 4.7,
-    amount: 180,
-    address: "123 Elm Street, Surrey",
-    status: "Completed",
-    reviewed: true,
-    rating: 5,
-  },
-  {
-    id: "#1028",
-    date: "2025-03-22",
-    dayLabel: "Sat, Mar 22, 2025",
-    time: "9:00 AM - 11:00 AM",
-    service: "Regular Clean",
-    cleaner: "Sarah Chen",
-    cleanerRating: 4.8,
-    amount: 120,
-    address: "123 Elm Street, Surrey",
-    status: "Completed",
-    reviewed: false,
-    rating: null,
-  },
-];
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function GET() {
-  return NextResponse.json({
-    upcoming: upcomingBookings,
-    past: pastBookings,
-    summary: {
-      totalBookings: 12,
-      upcomingCount: upcomingBookings.length,
-      pastCount: pastBookings.length,
-      totalSpent: 790,
-      averageRating: 4.7,
-    },
-  });
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const customerId = session.user.id
+    const today = new Date()
+    const todayStr = today.toISOString().split("T")[0]
+
+    // Get all bookings for this customer
+    const bookings = await db.booking.findMany({
+      where: { customerId },
+      include: {
+        cleaner: { select: { name: true, cleanerProfile: { select: { rating: true } } } },
+        reviews: { take: 1, select: { rating: true } },
+      },
+      orderBy: { date: "desc" },
+    })
+
+    const upcoming = bookings
+      .filter((b) => b.date >= todayStr && b.status !== "cancelled" && b.status !== "completed")
+      .map((b) => ({
+        id: `#${b.bookingNumber}`,
+        bookingDbId: b.id,
+        date: b.date,
+        dayLabel: new Date(b.date + "T00:00:00").toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        time: `${b.startTime} - ${b.endTime}`,
+        service: b.serviceType,
+        cleaner: b.cleaner?.name || "Unassigned",
+        cleanerRating: b.cleaner?.cleanerProfile?.rating || 0,
+        amount: b.amount,
+        address: b.address,
+        status: b.status.charAt(0).toUpperCase() + b.status.slice(1).replace("_", " "),
+        notes: b.notes,
+        specialInstructions: b.specialInstructions,
+        reviewed: b.reviewed,
+      }))
+
+    const past = bookings
+      .filter((b) => b.date < todayStr || b.status === "completed")
+      .map((b) => ({
+        id: `#${b.bookingNumber}`,
+        bookingDbId: b.id,
+        date: b.date,
+        dayLabel: new Date(b.date + "T00:00:00").toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        time: `${b.startTime} - ${b.endTime}`,
+        service: b.serviceType,
+        cleaner: b.cleaner?.name || "Unassigned",
+        cleanerRating: b.cleaner?.cleanerProfile?.rating || 0,
+        amount: b.amount,
+        address: b.address,
+        status: b.status === "completed" ? "Completed" : b.status.charAt(0).toUpperCase() + b.status.slice(1).replace("_", " "),
+        reviewed: b.reviewed,
+        rating: b.reviews.length > 0 ? b.reviews[0].rating : null,
+      }))
+
+    const completedCount = past.filter((b) => b.status === "Completed").length
+    const totalSpent = bookings
+      .filter((b) => b.status === "completed")
+      .reduce((sum, b) => sum + b.amount, 0)
+
+    // Average rating of reviews given
+    const allRatings = bookings
+      .flatMap((b) => b.reviews)
+      .map((r) => r.rating)
+    const averageRating = allRatings.length > 0
+      ? Math.round((allRatings.reduce((a, b) => a + b, 0) / allRatings.length) * 10) / 10
+      : null
+
+    return NextResponse.json({
+      upcoming,
+      past,
+      summary: {
+        totalBookings: bookings.length,
+        upcomingCount: upcoming.length,
+        pastCount: past.length,
+        totalSpent: Math.round(totalSpent),
+        averageRating,
+      },
+    })
+  } catch (error) {
+    console.error("Customer bookings API error:", error)
+    return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 })
+  }
 }

@@ -1,106 +1,52 @@
-export async function GET() {
-  const inventory = [
-    {
-      id: 1,
-      name: "All-Purpose Cleaner",
-      category: "Cleaning Solutions",
-      quantity: 45,
-      unit: "bottles",
-      minStock: 10,
-      costPerUnit: 5.99,
-      lastUpdated: "2025-01-14",
-    },
-    {
-      id: 2,
-      name: "Glass Cleaner",
-      category: "Cleaning Solutions",
-      quantity: 3,
-      unit: "bottles",
-      minStock: 8,
-      costPerUnit: 4.49,
-      lastUpdated: "2025-01-12",
-    },
-    {
-      id: 3,
-      name: "Floor Cleaner",
-      category: "Cleaning Solutions",
-      quantity: 28,
-      unit: "bottles",
-      minStock: 10,
-      costPerUnit: 7.99,
-      lastUpdated: "2025-01-13",
-    },
-    {
-      id: 4,
-      name: "Disinfectant Spray",
-      category: "Cleaning Solutions",
-      quantity: 2,
-      unit: "bottles",
-      minStock: 8,
-      costPerUnit: 6.99,
-      lastUpdated: "2025-01-10",
-    },
-    {
-      id: 5,
-      name: "Microfiber Cloths",
-      category: "Tools & Equipment",
-      quantity: 120,
-      unit: "pcs",
-      minStock: 20,
-      costPerUnit: 2.99,
-      lastUpdated: "2025-01-15",
-    },
-    {
-      id: 6,
-      name: "Dusters",
-      category: "Tools & Equipment",
-      quantity: 35,
-      unit: "pcs",
-      minStock: 10,
-      costPerUnit: 3.49,
-      lastUpdated: "2025-01-11",
-    },
-    {
-      id: 7,
-      name: "Trash Bags",
-      category: "Supplies",
-      quantity: 8,
-      unit: "boxes",
-      minStock: 12,
-      costPerUnit: 8.99,
-      lastUpdated: "2025-01-09",
-    },
-    {
-      id: 8,
-      name: "Gloves",
-      category: "Supplies",
-      quantity: 50,
-      unit: "pairs",
-      minStock: 15,
-      costPerUnit: 1.99,
-      lastUpdated: "2025-01-14",
-    },
-    {
-      id: 9,
-      name: "Mop Heads",
-      category: "Tools & Equipment",
-      quantity: 12,
-      unit: "pcs",
-      minStock: 5,
-      costPerUnit: 9.99,
-      lastUpdated: "2025-01-08",
-    },
-    {
-      id: 10,
-      name: "Sponges",
-      category: "Supplies",
-      quantity: 67,
-      unit: "pcs",
-      minStock: 20,
-      costPerUnit: 1.49,
-      lastUpdated: "2025-01-15",
-    },
-  ];
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
 
-  return Response.json(inventory);
+export async function GET() {
+  try {
+    const inventory = await db.inventory.findMany({
+      orderBy: { category: "asc" },
+    })
+
+    return NextResponse.json(
+      inventory.map((item) => ({
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        unit: item.unit,
+        minStock: item.minStock,
+        costPerUnit: item.costPerUnit,
+        isLowStock: item.quantity <= item.minStock,
+        lastUpdated: item.lastUpdated.toISOString().split("T")[0],
+      }))
+    )
+  } catch (error) {
+    console.error("Inventory API error:", error)
+    return NextResponse.json({ error: "Failed to fetch inventory" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json()
+    const { itemId, quantity } = body
+
+    const item = await db.inventory.update({
+      where: { id: itemId },
+      data: {
+        quantity: parseInt(quantity),
+        lastUpdated: new Date(),
+      },
+    })
+
+    return NextResponse.json({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      isLowStock: item.quantity <= item.minStock,
+    })
+  } catch (error) {
+    console.error("Inventory update error:", error)
+    return NextResponse.json({ error: "Failed to update inventory" }, { status: 500 })
+  }
 }

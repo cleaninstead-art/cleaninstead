@@ -1,72 +1,83 @@
-export async function GET() {
-  const offers = [
-    {
-      id: 1,
-      code: "WELCOME10",
-      type: "percentage",
-      value: 10,
-      minBooking: 80,
-      maxUses: 500,
-      usedCount: 342,
-      isActive: true,
-      expiresAt: "2025-06-30",
-    },
-    {
-      id: 2,
-      code: "ECO20",
-      type: "percentage",
-      value: 20,
-      minBooking: 100,
-      maxUses: 200,
-      usedCount: 178,
-      isActive: true,
-      expiresAt: "2025-03-31",
-    },
-    {
-      id: 3,
-      code: "SPRING25",
-      type: "fixed",
-      value: 25,
-      minBooking: 150,
-      maxUses: 300,
-      usedCount: 89,
-      isActive: true,
-      expiresAt: "2025-05-31",
-    },
-    {
-      id: 4,
-      code: "REFER15",
-      type: "percentage",
-      value: 15,
-      minBooking: 0,
-      maxUses: 1000,
-      usedCount: 567,
-      isActive: true,
-      expiresAt: "2025-12-31",
-    },
-    {
-      id: 5,
-      code: "CLEAN50",
-      type: "fixed",
-      value: 50,
-      minBooking: 250,
-      maxUses: 100,
-      usedCount: 45,
-      isActive: false,
-      expiresAt: "2025-02-28",
-    },
-    {
-      id: 6,
-      code: "VIP30",
-      type: "percentage",
-      value: 30,
-      minBooking: 200,
-      maxUses: 50,
-      usedCount: 50,
-      isActive: false,
-      expiresAt: "2024-12-31",
-    },
-  ];
+import { NextResponse } from "next/server"
+import { db } from "@/lib/db"
 
-  return Response.json(offers);
+export async function GET() {
+  try {
+    const offers = await db.offer.findMany({
+      orderBy: { createdAt: "desc" },
+    })
+
+    return NextResponse.json(
+      offers.map((o) => ({
+        id: o.id,
+        code: o.code,
+        type: o.type,
+        value: o.value,
+        minBooking: o.minBooking,
+        maxUses: o.maxUses,
+        usedCount: o.usedCount,
+        isActive: o.isActive,
+        expiresAt: o.expiresAt,
+        createdAt: o.createdAt.toISOString().split("T")[0],
+      }))
+    )
+  } catch (error) {
+    console.error("Offers API error:", error)
+    return NextResponse.json({ error: "Failed to fetch offers" }, { status: 500 })
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { code, type, value, minBooking, maxUses, expiresAt } = body
+
+    const offer = await db.offer.create({
+      data: {
+        code: code.toUpperCase(),
+        type,
+        value: parseFloat(value),
+        minBooking: parseFloat(minBooking) || 0,
+        maxUses: parseInt(maxUses) || 100,
+        expiresAt,
+        isActive: true,
+      },
+    })
+
+    return NextResponse.json({
+      id: offer.id,
+      code: offer.code,
+      type: offer.type,
+      value: offer.value,
+      minBooking: offer.minBooking,
+      maxUses: offer.maxUses,
+      usedCount: 0,
+      isActive: true,
+      expiresAt: offer.expiresAt,
+    })
+  } catch (error) {
+    console.error("Offer create error:", error)
+    return NextResponse.json({ error: "Failed to create offer" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json()
+    const { offerId, isActive } = body
+
+    const offer = await db.offer.update({
+      where: { id: offerId },
+      data: { isActive },
+    })
+
+    return NextResponse.json({
+      id: offer.id,
+      code: offer.code,
+      isActive: offer.isActive,
+    })
+  } catch (error) {
+    console.error("Offer update error:", error)
+    return NextResponse.json({ error: "Failed to update offer" }, { status: 500 })
+  }
 }

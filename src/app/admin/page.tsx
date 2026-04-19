@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   DollarSign,
   ClipboardList,
@@ -48,96 +48,20 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const kpiData = [
-  {
-    label: "Revenue",
-    value: "$24,580",
-    change: "+12.5%",
-    positive: true,
-    icon: DollarSign,
-    color: "bg-emerald-100 text-emerald-700",
-  },
-  {
-    label: "Bookings",
-    value: "156",
-    change: "+8.3%",
-    positive: true,
-    icon: ClipboardList,
-    color: "bg-blue-100 text-blue-700",
-  },
-  {
-    label: "Customers",
-    value: "89",
-    change: "+15.2%",
-    positive: true,
-    icon: Users,
-    color: "bg-purple-100 text-purple-700",
-  },
-  {
-    label: "Avg Rating",
-    value: "4.8/5",
-    change: "+0.2",
-    positive: true,
-    icon: Star,
-    color: "bg-amber-100 text-amber-700",
-  },
-];
-
-const recentActivity = [
-  {
-    id: 1,
-    icon: ClipboardList,
-    iconColor: "text-blue-600 bg-blue-100",
-    message: "New booking #1056 by Amanda J.",
-    detail: "Regular Clean - Jan 20, 9:00 AM",
-    time: "5 min ago",
-  },
-  {
-    id: 2,
-    icon: CreditCard,
-    iconColor: "text-emerald-600 bg-emerald-100",
-    message: "Payment $180 captured",
-    detail: "Booking #1009 - Jennifer Martinez",
-    time: "22 min ago",
-  },
-  {
-    id: 3,
-    icon: CheckCircle2,
-    iconColor: "text-green-600 bg-green-100",
-    message: "Review approved for Maria S.",
-    detail: "5-star rating from Robert Taylor",
-    time: "1 hour ago",
-  },
-  {
-    id: 4,
-    icon: UserPlus,
-    iconColor: "text-purple-600 bg-purple-100",
-    message: "New cleaner application from Tom K.",
-    detail: "Areas: Coquitlam, Port Moody",
-    time: "2 hours ago",
-  },
-  {
-    id: 5,
-    icon: CalendarDays,
-    iconColor: "text-amber-600 bg-amber-100",
-    message: "Booking #1003 rescheduled",
-    detail: "Sarah W. moved to Jan 18",
-    time: "3 hours ago",
-  },
-];
-
 export default function AdminDashboard() {
   const [chartData, setChartData] = useState<
     { day: string; amount: number }[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
     async function fetchStats() {
       try {
         const res = await fetch("/api/admin/stats");
         const data = await res.json();
-        setChartData(data.weeklyRevenue);
+        setStats(data);
+        setChartData(data.weeklyRevenue || []);
       } catch {
         setChartData([
           { day: "Mon", amount: 3200 },
@@ -154,6 +78,58 @@ export default function AdminDashboard() {
     }
     fetchStats();
   }, []);
+
+  const kpiData = useMemo(() => [
+    {
+      label: "Revenue",
+      value: stats ? `$${(stats.revenue || 0).toLocaleString()}` : "$0",
+      change: stats ? `${stats.revenueChange > 0 ? "+" : ""}${stats.revenueChange}%` : "+0%",
+      positive: (stats?.revenueChange || 0) >= 0,
+      icon: DollarSign,
+      color: "bg-emerald-100 text-emerald-700",
+    },
+    {
+      label: "Bookings",
+      value: stats ? String(stats.bookings || 0) : "0",
+      change: stats ? `+${stats.bookingsChange || 0}%` : "+0%",
+      positive: true,
+      icon: ClipboardList,
+      color: "bg-blue-100 text-blue-700",
+    },
+    {
+      label: "Customers",
+      value: stats ? String(stats.customers || 0) : "0",
+      change: stats ? `+${stats.customersChange || 0}%` : "+0%",
+      positive: true,
+      icon: Users,
+      color: "bg-purple-100 text-purple-700",
+    },
+    {
+      label: "Avg Rating",
+      value: stats ? `${stats.avgRating || 0}/5` : "0/5",
+      change: stats ? `+${stats.ratingChange || 0}` : "+0",
+      positive: (stats?.ratingChange || 0) >= 0,
+      icon: Star,
+      color: "bg-amber-100 text-amber-700",
+    },
+  ], [stats]);
+
+  const recentActivity = useMemo(() => {
+    if (!stats?.recentBookings?.length) return [];
+    return stats.recentBookings.slice(0, 5).map((b: any, i: number) => ({
+      id: i,
+      icon: b.status === "completed" ? CheckCircle2 : b.status === "pending" ? ClipboardList : CalendarDays,
+      iconColor: b.status === "completed" ? "text-green-600 bg-green-100"
+        : b.status === "pending" ? "text-amber-600 bg-amber-100"
+        : "text-blue-600 bg-blue-100",
+      message: `Booking #${b.id} by ${b.customerName}`,
+      detail: `${b.serviceType} - ${b.cleanerName}`,
+      time: "Just now",
+    }));
+  }, [stats]);
+
+  const pendingCount = stats?.bookingStats?.pending || 0;
+  const lowStockCount = 0; // Would need inventory API call
 
   return (
     <div className="space-y-6">
@@ -306,7 +282,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="px-4 md:px-6 pb-4 md:pb-6">
             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
-              {recentActivity.map((activity) => (
+              {recentActivity.length > 0 ? recentActivity.map((activity: any) => (
                 <div
                   key={activity.id}
                   className="flex items-start gap-3 group"
@@ -328,15 +304,19 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <p className="text-sm text-muted-foreground text-center py-8">No recent activity</p>
+              )}
             </div>
-            <Button
-              variant="ghost"
-              className="w-full mt-4 text-sm text-[#1B4332] hover:text-[#1B4332] hover:bg-emerald-50"
-            >
-              View all activity
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
+            <Link href="/admin/bookings">
+              <Button
+                variant="ghost"
+                className="w-full mt-4 text-sm text-[#1B4332] hover:text-[#1B4332] hover:bg-emerald-50"
+              >
+                View all activity
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -353,7 +333,7 @@ export default function AdminDashboard() {
                 <p className="text-sm font-semibold text-gray-900">
                   Manage Bookings
                 </p>
-                <p className="text-xs text-muted-foreground">12 pending</p>
+                <p className="text-xs text-muted-foreground">{pendingCount} pending</p>
               </div>
             </CardContent>
           </Card>
@@ -368,7 +348,7 @@ export default function AdminDashboard() {
                 <p className="text-sm font-semibold text-gray-900">
                   Cleaners
                 </p>
-                <p className="text-xs text-muted-foreground">1 pending</p>
+                <p className="text-xs text-muted-foreground">{stats?.activeCleaners || 0} active</p>
               </div>
             </CardContent>
           </Card>
@@ -383,7 +363,7 @@ export default function AdminDashboard() {
                 <p className="text-sm font-semibold text-gray-900">
                   Reviews
                 </p>
-                <p className="text-xs text-muted-foreground">3 pending</p>
+                <p className="text-xs text-muted-foreground">{stats?.avgRating || 0} avg rating</p>
               </div>
             </CardContent>
           </Card>
@@ -398,7 +378,7 @@ export default function AdminDashboard() {
                 <p className="text-sm font-semibold text-gray-900">
                   Inventory
                 </p>
-                <p className="text-xs text-muted-foreground">3 low stock</p>
+                <p className="text-xs text-muted-foreground">Manage supplies</p>
               </div>
             </CardContent>
           </Card>

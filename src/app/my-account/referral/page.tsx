@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   Copy,
@@ -23,66 +23,105 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 
-const referralCode = "AMANDA12";
+interface ReferralItem {
+  id: string;
+  name: string;
+  email: string;
+  referredDate: string;
+  status: string;
+  rewardEarned: boolean;
+  creditAmount: number;
+}
 
-const referralStats = {
-  friendsReferred: 3,
-  creditsEarned: 45,
-  pendingReferrals: 1,
-};
+interface ReferralResponse {
+  code: string;
+  referralCount: number;
+  creditsEarned: number;
+  pendingReferrals: number;
+  referralLink: string;
+  rewardPerReferral: number;
+  friendDiscount: number;
+  referrals: ReferralItem[];
+}
 
-const referralSteps = [
-  {
-    step: 1,
-    title: "Share Your Code",
-    description: "Share your unique referral code AMANDA12 with friends and family.",
-    icon: Share2,
-    color: "bg-emerald-50",
-    iconColor: "text-[#1B4332]",
-  },
-  {
-    step: 2,
-    title: "They Save $20",
-    description: "Your friends get $20 off their first booking with CleanInstead.",
-    icon: Gift,
-    color: "bg-blue-50",
-    iconColor: "text-blue-600",
-  },
-  {
-    step: 3,
-    title: "You Earn $15",
-    description: "You earn $15 credit for each successful referral. No limits!",
-    icon: DollarSign,
-    color: "bg-amber-50",
-    iconColor: "text-amber-600",
-  },
-];
-
-const recentReferrals = [
-  {
-    name: "Carol Williams",
-    referredDate: "Mar 15, 2025",
-    status: "Reward earned",
-    earned: true,
-  },
-  {
-    name: "Bob Martinez",
-    referredDate: "Feb 28, 2025",
-    status: "Reward earned",
-    earned: true,
-  },
-  {
-    name: "David Thompson",
-    referredDate: "Jan 10, 2025",
-    status: "Reward earned",
-    earned: true,
-  },
-];
+function formatReferredDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default function ReferralPage() {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<ReferralResponse | null>(null);
+
+  useEffect(() => {
+    async function fetchReferral() {
+      try {
+        const res = await fetch("/api/customer/referral");
+        if (res.ok) {
+          const json = await res.json();
+          setData(json);
+        }
+      } catch {
+        // silently fail
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchReferral();
+  }, []);
+
+  const referralCode = data?.code || "";
+  const referralStats = data
+    ? {
+        friendsReferred: data.referralCount,
+        creditsEarned: data.creditsEarned,
+        pendingReferrals: data.pendingReferrals,
+      }
+    : { friendsReferred: 0, creditsEarned: 0, pendingReferrals: 0 };
+
+  const referralLink = data?.referralLink || "";
+  const friendDiscount = data?.friendDiscount || 20;
+  const rewardPerReferral = data?.rewardPerReferral || 15;
+
+  const referralSteps = [
+    {
+      step: 1,
+      title: "Share Your Code",
+      description: `Share your unique referral code ${referralCode || "..."} with friends and family.`,
+      icon: Share2,
+      color: "bg-emerald-50",
+      iconColor: "text-[#1B4332]",
+    },
+    {
+      step: 2,
+      title: "They Save $20",
+      description: `Your friends get $${friendDiscount} off their first booking with CleanInstead.`,
+      icon: Gift,
+      color: "bg-blue-50",
+      iconColor: "text-blue-600",
+    },
+    {
+      step: 3,
+      title: `You Earn $${rewardPerReferral}`,
+      description: `You earn $${rewardPerReferral} credit for each successful referral. No limits!`,
+      icon: DollarSign,
+      color: "bg-amber-50",
+      iconColor: "text-amber-600",
+    },
+  ];
+
+  const recentReferrals = (data?.referrals || []).map((r) => ({
+    name: r.name,
+    referredDate: formatReferredDate(r.referredDate),
+    earned: r.rewardEarned,
+  }));
 
   const handleCopyCode = async () => {
     try {
@@ -105,9 +144,7 @@ export default function ReferralPage() {
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(
-        `https://cleaninstead.com/referral/${referralCode}`
-      );
+      await navigator.clipboard.writeText(referralLink);
       setLinkCopied(true);
       toast({
         title: "Referral Link Copied!",
@@ -126,10 +163,10 @@ export default function ReferralPage() {
 
   const handleShareEmail = () => {
     const subject = encodeURIComponent(
-      "Get $20 off your first cleaning with CleanInstead!"
+      `Get $${friendDiscount} off your first cleaning with CleanInstead!`
     );
     const body = encodeURIComponent(
-      `Hey!\n\nI've been using CleanInstead for eco-friendly cleaning and love it. Use my code ${referralCode} to get $20 off your first booking!\n\nThey use all-natural, chemical-free products and the results are amazing.\n\nBook now: https://cleaninstead.com/referral/${referralCode}\n\nCheers!`
+      `Hey!\n\nI've been using CleanInstead for eco-friendly cleaning and love it. Use my code ${referralCode} to get $${friendDiscount} off your first booking!\n\nThey use all-natural, chemical-free products and the results are amazing.\n\nBook now: ${referralLink}\n\nCheers!`
     );
     window.open(`mailto:?subject=${subject}&body=${body}`);
     toast({
@@ -140,7 +177,7 @@ export default function ReferralPage() {
 
   const handleShareWhatsApp = () => {
     const text = encodeURIComponent(
-      `Hey! I've been using CleanInstead for eco-friendly cleaning. Use my code ${referralCode} for $20 off your first booking! 🔧✨`
+      `Hey! I've been using CleanInstead for eco-friendly cleaning. Use my code ${referralCode} for $${friendDiscount} off your first booking! 🔧✨`
     );
     window.open(`https://wa.me/?text=${text}`);
     toast({
@@ -148,6 +185,14 @@ export default function ReferralPage() {
       description: "You'll be redirected to WhatsApp to share your referral.",
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-[#1B4332]/30 border-t-[#1B4332] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -164,9 +209,9 @@ export default function ReferralPage() {
           </h1>
           <p className="text-[#95D5B2] text-lg max-w-md mx-auto">
             Give your friends{" "}
-            <span className="font-bold text-white">$20 off</span> their first
+            <span className="font-bold text-white">${friendDiscount} off</span> their first
             clean. You get{" "}
-            <span className="font-bold text-white">$15 credit</span> for each
+            <span className="font-bold text-white">${rewardPerReferral} credit</span> for each
             referral!
           </p>
         </div>
