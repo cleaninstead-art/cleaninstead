@@ -18,7 +18,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/lib/useAuth"
 
 interface TodayJob {
   id: string
@@ -63,7 +63,7 @@ function getGreeting(): string {
 }
 
 export default function TodayJobsPage() {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [jobs, setJobs] = useState<TodayJob[]>([])
   const [summary, setSummary] = useState<any>(null)
   const [dateStr, setDateStr] = useState("")
@@ -123,7 +123,7 @@ export default function TodayJobsPage() {
     window.open(`https://maps.google.com/?q=${encoded}`, "_blank")
   }
 
-  const userName = session?.user?.name || "Cleaner"
+  const userName = user?.name || "Cleaner"
 
   if (loading) {
     return (

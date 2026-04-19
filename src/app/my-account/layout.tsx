@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useAuth } from "@/lib/useAuth";
 import {
   Leaf,
   LayoutDashboard,
@@ -54,6 +54,7 @@ function SidebarContent({
   userEmail: string;
   initials: string;
   onCloseMobile: () => void;
+  onSignOut: () => void;
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -127,7 +128,7 @@ function SidebarContent({
       {/* Sign Out */}
       <div className="px-3 pb-4">
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={onSignOut}
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-white/50 hover:text-red-400 hover:bg-white/5 transition-all duration-150"
         >
           <LogOut className="w-[18px] h-[18px]" />
@@ -145,16 +146,16 @@ export default function CustomerLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { user, loading, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   React.useEffect(() => {
-    if (status === "unauthenticated") {
+    if (!user && !loading) {
       router.push("/auth/signin?role=customer");
     }
-  }, [status, router]);
+  }, [user, loading, router]);
 
-  if (status === "loading") {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
@@ -165,12 +166,17 @@ export default function CustomerLayout({
     );
   }
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 
-  const userName = session.user?.name || "Customer";
-  const userEmail = session.user?.email || "";
+  const userName = user?.name || "Customer";
+  const userEmail = user?.email || "";
+
+  const handleSignOut = async () => {
+    await logout();
+    router.push("/");
+  };
   const initials = userName
     .split(" ")
     .map((n) => n[0])
@@ -189,6 +195,7 @@ export default function CustomerLayout({
           userEmail={userEmail}
           initials={initials}
           onCloseMobile={() => setMobileOpen(false)}
+          onSignOut={handleSignOut}
         />
       </aside>
 
@@ -218,6 +225,7 @@ export default function CustomerLayout({
           userEmail={userEmail}
           initials={initials}
           onCloseMobile={() => setMobileOpen(false)}
+          onSignOut={handleSignOut}
         />
       </aside>
 

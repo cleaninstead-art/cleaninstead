@@ -40,10 +40,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const { logout } = useAuth();
   const { toast } = useToast();
 
   // Profile State
@@ -153,8 +156,9 @@ export default function SettingsPage() {
     });
   };
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
+  const handleSignOut = async () => {
+    await logout();
+    router.push("/");
   };
 
   return (

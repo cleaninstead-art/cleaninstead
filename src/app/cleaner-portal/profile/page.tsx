@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState } from "react"
-import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/useAuth"
 import {
   Star,
   Briefcase,
@@ -80,6 +81,8 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg
 }
 
 export default function ProfilePage() {
+  const router = useRouter()
+  const { logout } = useAuth()
   const [available, setAvailable] = useState(true)
   const [notifications, setNotifications] = useState(true)
   const [ecoOnly, setEcoOnly] = useState(true)
@@ -87,7 +90,8 @@ export default function ProfilePage() {
   const [emergencyContact, setEmergencyContact] = useState("")
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: "/auth/signin?role=cleaner" })
+    await logout()
+    router.push("/auth/signin?role=cleaner")
   }
 
   return (

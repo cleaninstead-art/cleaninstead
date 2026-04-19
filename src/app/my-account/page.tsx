@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/useAuth";
 import {
   Calendar,
   Clock,
@@ -109,7 +109,7 @@ interface BookingsResponse {
 }
 
 export default function CustomerDashboard() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [bookingsData, setBookingsData] = useState<BookingsResponse | null>(null);
 
@@ -143,7 +143,7 @@ export default function CustomerDashboard() {
     );
   }
 
-  const userName = session?.user?.name || "Amanda";
+  const userName = user?.name || "Amanda";
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">

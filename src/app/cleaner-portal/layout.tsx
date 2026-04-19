@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState, useSyncExternalStore } from "react"
-import { useSession, signIn } from "next-auth/react"
+import { useAuth } from "@/lib/useAuth"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { Leaf, Home, Calendar, MessageCircle, DollarSign, User, Bell } from "lucide-react"
@@ -22,7 +22,7 @@ export default function CleanerPortalLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { data: session, status } = useSession()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const mounted = useSyncExternalStore(
@@ -32,13 +32,13 @@ export default function CleanerPortalLayout({
   )
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (!user && !loading) {
       router.push("/auth/signin?role=cleaner")
     }
-  }, [status, router])
+  }, [user, loading, router])
 
   // Show loading while checking session
-  if (!mounted || status === "loading") {
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f0fdf4]">
         <div className="flex flex-col items-center gap-3">
@@ -50,7 +50,7 @@ export default function CleanerPortalLayout({
   }
 
   // Don't render the portal if not authenticated
-  if (!session) {
+  if (!user) {
     return null
   }
 
@@ -86,7 +86,7 @@ export default function CleanerPortalLayout({
               <div className="w-8 h-8 rounded-full bg-[#95D5B2] flex items-center justify-center text-[#1B4332] font-semibold text-sm">
                 MS
               </div>
-              <span className="text-sm font-medium hidden sm:inline">{session.user?.name || "Maria Santos"}</span>
+              <span className="text-sm font-medium hidden sm:inline">{user?.name || "Maria Santos"}</span>
             </div>
           </div>
         </header>
