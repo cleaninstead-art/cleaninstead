@@ -127,7 +127,7 @@ export default function CleanerPortalLayout({
 
   const handleSignOut = async () => {
     await logout();
-    router.push("/");
+    window.location.href = "/auth/signin?role=cleaner";
   };
 
   useEffect(() => {
@@ -137,9 +137,9 @@ export default function CleanerPortalLayout({
 
   useEffect(() => {
     if (!user && !loading) {
-      router.push("/auth/signin?role=cleaner");
+      window.location.href = "/auth/signin?role=cleaner";
     }
-  }, [user, loading, router]);
+  }, [user, loading]);
 
   // Close mobile sheet on route change
   useEffect(() => {

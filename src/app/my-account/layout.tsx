@@ -152,9 +152,9 @@ export default function CustomerLayout({
 
   React.useEffect(() => {
     if (!user && !loading) {
-      router.push("/auth/signin?role=customer");
+      window.location.href = "/auth/signin?role=customer";
     }
-  }, [user, loading, router]);
+  }, [user, loading]);
 
   if (loading) {
     return (
@@ -176,7 +176,7 @@ export default function CustomerLayout({
 
   const handleSignOut = async () => {
     await logout();
-    router.push("/");
+    window.location.href = "/auth/signin?role=customer";
   };
   const initials = userName
     .split(" ")
