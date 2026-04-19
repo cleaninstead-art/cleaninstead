@@ -48,6 +48,7 @@ function SidebarContent({
   userEmail,
   initials,
   onCloseMobile,
+  onSignOut,
 }: {
   pathname: string;
   userName: string;

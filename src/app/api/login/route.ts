@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
 
 const fallbackUsers: Record<string, { password: string; role: string; name: string }> = {
   "admin@cleaninstead.com": { password: "admin123", role: "admin", name: "Admin User" },
@@ -21,31 +20,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password required" }, { status: 400 })
     }
 
-    // Try database first
+    const normalizedEmail = email.trim().toLowerCase()
     let user = null
+
+    // Try database first (dynamic import to avoid crashing if Prisma fails)
     try {
-      const dbUser = await db.user.findUnique({
-        where: { email: email.trim().toLowerCase() },
-      })
-      if (dbUser && dbUser.password === password) {
-        user = {
-          id: dbUser.id,
-          email: dbUser.email,
-          name: dbUser.name,
-          role: dbUser.role,
+      const { db } = await import("@/lib/db")
+      if (db && db.user) {
+        const dbUser = await db.user.findUnique({
+          where: { email: normalizedEmail },
+        })
+        if (dbUser && dbUser.password === password) {
+          user = {
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            role: dbUser.role,
+          }
         }
       }
     } catch (e: any) {
-      console.error("[Login API] DB error:", e?.message)
+      console.error("[Login API] DB error (falling back):", e?.message || e)
     }
 
-    // Fallback to hardcoded
+    // Fallback to hardcoded users
     if (!user) {
-      const fallback = fallbackUsers[email.trim().toLowerCase()]
+      const fallback = fallbackUsers[normalizedEmail]
       if (fallback && fallback.password === password) {
         user = {
-          id: `fallback-${email}`,
-          email,
+          id: `fallback-${normalizedEmail}`,
+          email: normalizedEmail,
           name: fallback.name,
           role: fallback.role,
         }
@@ -53,6 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!user) {
+      console.log("[Login API] Login failed for:", normalizedEmail, "pw length:", password?.length)
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
@@ -77,7 +82,6 @@ export async function POST(request: NextRequest) {
     })
 
     // Set session cookie
-    // On HTTPS (production), browsers require Secure flag
     const isHttps = request.headers.get("x-forwarded-proto") === "https" || request.url?.startsWith("https")
 
     response.cookies.set("ci-session", token, {
