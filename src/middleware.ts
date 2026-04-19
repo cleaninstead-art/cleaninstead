@@ -3,7 +3,11 @@ import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const token = request.cookies.get("next-auth.session-token")?.value
+
+  // Check for both development and production session cookie names
+  const token =
+    request.cookies.get("next-auth.session-token")?.value ||
+    request.cookies.get("__Secure-next-auth.session-token")?.value
 
   const protectedPaths = ["/admin", "/cleaner-portal", "/my-account"]
 

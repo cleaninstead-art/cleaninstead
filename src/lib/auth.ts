@@ -2,7 +2,7 @@ import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "@/lib/db"
 
-// Fallback users for when database is not available (Vercel serverless cold start, etc.)
+// Fallback users for when database is not available
 const fallbackUsers: Record<string, { password: string; role: string; name: string }> = {
   "admin@cleaninstead.com": { password: "admin123", role: "admin", name: "Admin User" },
   "maria@cleaninstead.com": { password: "cleaner123", role: "cleaner", name: "Maria Santos" },
@@ -14,6 +14,40 @@ const fallbackUsers: Record<string, { password: string; role: string; name: stri
   "david@example.com": { password: "customer123", role: "customer", name: "David Thompson" },
 }
 
+async function authenticate(email: string, password: string): Promise<{ id: string; email: string; name: string; role: string; image?: string | null } | null> {
+  // Try database lookup first
+  try {
+    const user = await db.user.findUnique({
+      where: { email },
+    })
+
+    if (user && user.password && user.password === password) {
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name || "",
+        role: user.role,
+        image: user.avatar,
+      }
+    }
+  } catch (dbError: any) {
+    console.error("[Auth] DB lookup error:", dbError?.message)
+  }
+
+  // Fallback to hardcoded credentials
+  const fallback = fallbackUsers[email]
+  if (fallback && fallback.password === password) {
+    return {
+      id: `fallback-${email}`,
+      email,
+      name: fallback.name,
+      role: fallback.role,
+    }
+  }
+
+  return null
+}
+
 export const authOptions: any = {
   providers: [
     CredentialsProvider({
@@ -23,40 +57,25 @@ export const authOptions: any = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials: any) {
-        if (!credentials?.email || !credentials?.password) return null
-
-        // Try database lookup first
-        try {
-          const user = await db.user.findUnique({
-            where: { email: credentials.email },
-          })
-
-          if (user && user.password === credentials.password) {
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              role: user.role,
-              image: user.avatar,
-            }
-          }
-        } catch (dbError) {
-          // Database not available — fall through to fallback
-          console.warn("Auth DB lookup failed, using fallback credentials:", (dbError as Error)?.message)
+        if (!credentials?.email || !credentials?.password) {
+          console.log("[Auth] Missing credentials")
+          return null
         }
 
-        // Fallback to hardcoded credentials
-        const fallbackUser = fallbackUsers[credentials.email]
-        if (fallbackUser && fallbackUser.password === credentials.password) {
-          return {
-            id: credentials.email,
-            email: credentials.email,
-            name: fallbackUser.name,
-            role: fallbackUser.role,
-          }
+        const email = String(credentials.email).trim()
+        const password = String(credentials.password)
+
+        console.log("[Auth] Attempting login for:", email)
+
+        const user = await authenticate(email, password)
+
+        if (user) {
+          console.log("[Auth] Login successful for:", email, "role:", user.role)
+        } else {
+          console.log("[Auth] Login failed for:", email)
         }
 
-        return null
+        return user
       },
     }),
   ],
