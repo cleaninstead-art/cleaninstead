@@ -174,11 +174,11 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="px-4 py-5 space-y-5">
+    <div className="space-y-6">
       {/* Header */}
       <section className="space-y-1">
-        <h1 className="text-2xl font-bold text-[#1B4332]">Schedule</h1>
-        <p className="text-sm text-[#6b7280]">Manage your weekly cleaning jobs</p>
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Schedule</h2>
+        <p className="text-muted-foreground">Manage your weekly cleaning jobs</p>
       </section>
 
       {/* Week Navigation */}
@@ -464,7 +464,7 @@ export default function SchedulePage() {
         </>
       )}
 
-      <div className="h-4" />
+
     </div>
   )
 }

@@ -1,8 +1,6 @@
 "use client"
 
 import React, { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/useAuth"
 import {
   Star,
   Briefcase,
@@ -14,7 +12,6 @@ import {
   Leaf,
   Phone,
   User,
-  LogOut,
   ChevronRight,
   Award,
   Sparkles,
@@ -81,28 +78,21 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "lg
 }
 
 export default function ProfilePage() {
-  const router = useRouter()
-  const { logout } = useAuth()
   const [available, setAvailable] = useState(true)
   const [notifications, setNotifications] = useState(true)
   const [ecoOnly, setEcoOnly] = useState(true)
   const [phoneNumber, setPhoneNumber] = useState("604-555-1234")
   const [emergencyContact, setEmergencyContact] = useState("")
 
-  const handleLogout = async () => {
-    await logout()
-    router.push("/auth/signin?role=cleaner")
-  }
-
   return (
-    <div className="px-4 py-5 space-y-5">
+    <div className="space-y-6">
       {/* Profile Header */}
       <section className="flex flex-col items-center text-center">
         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1B4332] to-[#2d6a4f] flex items-center justify-center text-3xl font-bold text-white shadow-lg mb-3">
           MS
         </div>
-        <h1 className="text-xl font-bold text-[#1B4332]">Maria Santos</h1>
-        <p className="text-sm text-[#6b7280] mt-0.5">Professional Eco-Friendly Cleaner</p>
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Profile</h2>
+        <p className="text-muted-foreground mt-0.5">Professional Eco-Friendly Cleaner</p>
         <div className="flex items-center gap-2 mt-2">
           <StarRating rating={4} size="sm" />
           <span className="text-sm font-bold text-[#1B4332]">4.9</span>
@@ -343,17 +333,8 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Logout */}
-      <Button
-        onClick={handleLogout}
-        variant="outline"
-        className="w-full h-11 text-sm font-medium text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 rounded-xl"
-      >
-        <LogOut className="w-4 h-4 mr-2" />
-        Sign Out
-      </Button>
-
-      <p className="text-center text-[10px] text-[#9ca3af] pb-4">
+      {/* Version Info */}
+      <p className="text-center text-[10px] text-muted-foreground pb-4">
         CleanInstead Cleaner Portal v1.0.0
       </p>
     </div>

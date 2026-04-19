@@ -277,7 +277,7 @@ export default function JobDetailPage() {
   }
 
   return (
-    <div className="pb-6">
+    <div className="space-y-6">
       {/* Top Bar */}
       <div className="sticky top-0 z-40 bg-white border-b border-[#e5e7eb] px-4 py-3 flex items-center gap-3">
         <Button
@@ -298,7 +298,7 @@ export default function JobDetailPage() {
         )}
       </div>
 
-      <div className="px-4 py-4 space-y-4">
+      <div className="space-y-4">
         {/* Customer & Job Info Card */}
         <Card className="border-0 shadow-sm overflow-hidden">
           <div className="bg-gradient-to-r from-[#1B4332] to-[#2d6a4f] p-4 text-white">

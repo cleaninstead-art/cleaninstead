@@ -93,18 +93,18 @@ export default function MessagesPage() {
   const unreadCount = conversations.filter((c) => c.unread).length
 
   return (
-    <div className="px-4 py-5 space-y-4">
+    <div className="space-y-6">
       {/* Header */}
       <section className="space-y-1">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1B4332]">Messages</h1>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Messages</h2>
           {unreadCount > 0 && (
             <Badge className="bg-[#1B4332] text-white text-xs font-medium px-2.5 py-0.5">
               {unreadCount} unread
             </Badge>
           )}
         </div>
-        <p className="text-sm text-[#6b7280]">
+        <p className="text-muted-foreground">
           {conversations.length} conversations
         </p>
       </section>

@@ -153,10 +153,10 @@ export default function EarningsPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="px-4 py-5 space-y-5">
+      <div className="space-y-6">
         <section className="space-y-1">
-          <h1 className="text-2xl font-bold text-[#1B4332]">Earnings</h1>
-          <p className="text-sm text-[#6b7280]">Track your income and tips</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Earnings</h2>
+          <p className="text-muted-foreground">Track your income and tips</p>
         </section>
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 text-[#1B4332] animate-spin" />
@@ -168,10 +168,10 @@ export default function EarningsPage() {
   // Error state
   if (error) {
     return (
-      <div className="px-4 py-5 space-y-5">
+      <div className="space-y-6">
         <section className="space-y-1">
-          <h1 className="text-2xl font-bold text-[#1B4332]">Earnings</h1>
-          <p className="text-sm text-[#6b7280]">Track your income and tips</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Earnings</h2>
+          <p className="text-muted-foreground">Track your income and tips</p>
         </section>
         <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-6 text-center">
@@ -189,11 +189,11 @@ export default function EarningsPage() {
   }
 
   return (
-    <div className="px-4 py-5 space-y-5">
+    <div className="space-y-6">
       {/* Header */}
       <section className="space-y-1">
-        <h1 className="text-2xl font-bold text-[#1B4332]">Earnings</h1>
-        <p className="text-sm text-[#6b7280]">Track your income and tips</p>
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Earnings</h2>
+        <p className="text-muted-foreground">Track your income and tips</p>
       </section>
 
       {/* Summary Cards */}
