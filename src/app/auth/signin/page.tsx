@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Leaf, User, Shield, Sparkles, Eye, EyeOff } from "lucide-react"
@@ -15,20 +15,31 @@ const roles = [
   { id: "admin", label: "Admin", icon: Shield, color: "bg-green-100 text-green-700", demo: "admin@cleaninstead.com" },
 ]
 
-export default function SignInPage() {
-  const [role, setRole] = useState("customer")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+function getInitialCredentials(roleParam: string | null) {
+  if (roleParam && ["admin", "cleaner", "customer"].includes(roleParam)) {
+    const r = roles.find((x) => x.id === roleParam)
+    if (r) {
+      return {
+        email: r.demo,
+        password: r.demo.includes("admin") ? "admin123" : r.demo.includes("cleaner") ? "cleaner123" : "customer123",
+      }
+    }
+  }
+  return { email: "", password: "" }
+}
+
+function SignInForm() {
+  const searchParams = useSearchParams()
+  const roleParam = searchParams.get("role")
+  const initialCreds = getInitialCredentials(roleParam)
+
+  const [role, setRole] = useState(roleParam && ["admin", "cleaner", "customer"].includes(roleParam) ? roleParam : "customer")
+  const [email, setEmail] = useState(initialCreds.email)
+  const [password, setPassword] = useState(initialCreds.password)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const roleParam = searchParams.get("role")
-  if (roleParam && ["admin", "cleaner", "customer"].includes(roleParam) && role !== roleParam) {
-    setRole(roleParam)
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -81,6 +92,7 @@ export default function SignInPage() {
                 return (
                   <button
                     key={r.id}
+                    type="button"
                     onClick={() => { setRole(r.id); fillDemo(r.demo) }}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all text-sm font-medium ${
                       role === r.id ? "border-emerald-500 bg-emerald-50" : "border-gray-200 hover:border-gray-300"
@@ -146,5 +158,21 @@ export default function SignInPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+function SignInFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+      <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInFallback />}>
+      <SignInForm />
+    </Suspense>
   )
 }
